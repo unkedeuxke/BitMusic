@@ -3,10 +3,13 @@ package bitmusic.music.business;
 import java.util.*;
 import java.lang.*;
 import bitmusic.music.data.*;
+import bitmusic.network.exception.NetworkException;
 import bitmusic.network.main.ApiMusicImpl;
 //porte d'entrée vers le module Network
 import bitmusic.network.main.Controller;
 import bitmusic.profile.api.ApiProfileImpl;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class implementing the search feature of our application. The user can search
@@ -26,7 +29,7 @@ public class SongSearcher {
      */
     public SongSearcher(SongLibrary songLib) {
         songLibrary = songLib;
-        ApiProfileImpl bla = ApiProfileImpl.getApiProfile();
+        
     }
 
     /**
@@ -40,8 +43,16 @@ public class SongSearcher {
     public void searchSongsbyUser(String userID, String SearchID) {
 
         //ApiMusic apiMusic = new ApiMusicImpl(); //à ne pas faire, faire appel au singleton
+
         ApiMusicImpl apiMusic = Controller.getInstance().getApiMusic();
-        apiMusic.getSongsByUser(userID, SearchID);
+        ApiProfileImpl apiProfile = ApiProfileImpl.getApiProfile();
+        String localUserId=apiProfile.getCurrentUser().getUserId();
+        try {
+            apiMusic.getSongsByUser(localUserId,userID, SearchID);
+        } catch (NetworkException ex) {
+            Logger.getLogger(SongSearcher.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }
 
     /**
@@ -64,7 +75,7 @@ public class SongSearcher {
         while (it.hasNext()) {
             currentSong = it.next();
             //song dont l'attribut right est changé : les droits ont été ajustés pour userId
-            currentSong = currentSong.getLightSong(userId);
+            currentSong = getLightSong(currentSong, userId);
             songsForRequester.add(currentSong); //songs avec les droits ajustés pour userId
         }
         //build the SongLibrary to be returned
@@ -95,10 +106,16 @@ public class SongSearcher {
 
         //for each user, go fetch their songs with the right tags
         it = connectedUsers.iterator();
+        ApiProfileImpl apiProfile = ApiProfileImpl.getApiProfile();
+        String localUserId=apiProfile.getCurrentUser().getUserId();
         while (it.hasNext()) {
             userIdDest = it.next();
             //result of call below go straight to the UI
-            apiMusicFromNetwork.searchSongsByTags(userIdDest, searchId, tagList);
+            try {
+                apiMusicFromNetwork.searchSongsByTags(localUserId,userIdDest, searchId, tagList);
+            } catch (NetworkException ex) {
+                Logger.getLogger(SongSearcher.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         //method returns only our songs with the right tags
         myTaggedSongs = this.getSongsByTag(searchId, null, tagList);
@@ -126,7 +143,7 @@ public class SongSearcher {
             if (currentSong.hasTag(tagList)) {
                 //changer les droits de la chanson pour le user en question - if userId = null then local user is requester
                 if (userId != null){
-                    currentSong = currentSong.getLightSong(userId);
+                    currentSong = getLightSong(currentSong, userId);
                 }
                 songsWithCorrectTags.add(currentSong);
             }
@@ -134,6 +151,33 @@ public class SongSearcher {
         //instantiate the SongLibrary to be sent
         songLibraryForRequester = new SongLibrary(songsWithCorrectTags);
         return songLibraryForRequester;
+    }
+    
+    /**
+     * Get a lightSong with the localSong attribute for the user with userId
+     * @param currentSong The song whose the lightsong will be created
+     * @param authorId The authorId
+     * @return A light song with attribute modified for the autorId.
+     */
+    public Song getLightSong(Song currentSong, String userId) {
+        Song lightSong = new Song( currentSong.getSongId(), currentSong.getTitle(), currentSong.getArtist(), currentSong.getAlbum(),
+                currentSong.getTags(), currentSong.getRightsByCategory());
+        ArrayList<String> categoryList = ApiProfileImpl.getApiProfile().getCategoriesNameByUserId(userId);
+        Rights localRights = new Rights(true, true, true, true);
+        
+        for (String categoryName :  categoryList) {
+            Rights r = currentSong.getRightsByCategory().get(categoryName);
+            if (!r.getcanComment())
+                r.setcanComment(false);
+            if (!r.getcanPlay())
+                r.setcanPlay(false);
+            if (!r.getcanRate())
+                r.setcanRate(false);
+            if (!r.getcanReadInfo())
+                r.setcanReadInfo(false);
+        }
+                
+        return lightSong;
     }
 
 

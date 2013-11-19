@@ -36,4 +36,12 @@ public final class ImportSongPopUpController extends AbstractController<ImportSo
             }
         }
     }
+
+    public class CancelListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("---- Clic sur le bouton Annuler");
+            WindowComponent.getInstance().getMyProfileComponent().getController().getPopUp().dispose();
+        }
+    }
 }

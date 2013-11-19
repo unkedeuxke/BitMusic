@@ -6,24 +6,31 @@
 
 package bitmusic.network.main;
 
-import bitmusic.network.exception.EnumTypeException;
+
 import bitmusic.network.exception.NetworkDirectoryException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  *
- * @author florian, Pak
+ * @author florian, Pak, vincent
  */
 public final class Controller {
     /**
      * The broadcast address of the network.
      */
-    private static String broadcastAddress;
+    private transient String broadcastAddress = "";
     /**
      * The network address of the network.
      */
-    private static String networkAddress;
+    private transient String networkAddress = "";
     /**
      * Contains the singleton instance.
      */
@@ -32,38 +39,38 @@ public final class Controller {
      * References the HMI API
      * (Due to the composition link on the class diagram).
      */
-    private ApiHmiImpl apiHmi;
+    private final transient ApiHmiImpl apiHmi;
     /**
      * References the Music API
      * (Due to the composition link on the class diagram).
      */
-    private ApiMusicImpl apiMusic;
+    private final transient ApiMusicImpl apiMusic;
     /**
      * References the Profile API
      * (Due to the composition link on the class diagram).
      */
-    private ApiProfileImpl apiProfile;
+    private final transient ApiProfileImpl apiProfile;
     /**
      * References the Exception API
      * (Due to the composition link on the class diagram).
      */
-    private ApiExceptionImpl apiException;
+    private final transient ApiExceptionImpl apiException;
     /**
      * References the network listener
      * (Due to the composition link on the class diagram).
      */
-    private NetworkListener NETLISTENER;
+    private final transient NetworkListener netListener;
 
 
     /**
-     * References the worker manage
+     * References the worker manager
      * (Due to the composition link on the class diagram).
      */
-    private ThreadManager threadManager;
+    private final transient ThreadManager threadManager;
     /**
      * Contains the correspondance between UserId and Ips.
      */
-    private Map<String, String> directory;
+    private final transient Map<String, String> directory;
 
     /*########################################################################*/
     /* CONSTRUCTORS */
@@ -72,12 +79,20 @@ public final class Controller {
      * Construct a new controller and links all the singleton's instances.
      */
     private Controller() {
-        //Initialisation of IP addresses
-        broadcastAddress = "127.0.0.255";
-        networkAddress = "127.0.0.1";
+        this.networkAddress = "";
+        this.broadcastAddress = "";
+        try {
+            this.networkAddress = InetAddress.getLocalHost().getHostAddress();
+            this.broadcastAddress = findBroadCastAddress();
+        }
+        catch (UnknownHostException ex) {
+        }
+
+
+
 
         //Create the directory
-        directory = new HashMap<String, String>();
+        directory = new HashMap();
 
         //Contains all the API's instances
         apiException = bitmusic.network.main.ApiExceptionImpl.getInstance();
@@ -86,7 +101,7 @@ public final class Controller {
         apiProfile = bitmusic.network.main.ApiProfileImpl.getInstance();
 
         //Contains the NetworkListener instance
-        NETLISTENER = bitmusic.network.main.NetworkListener.getInstance();
+        netListener = bitmusic.network.main.NetworkListener.getInstance();
 
         //Contains the WorkManager instance
         threadManager = bitmusic.network.main.ThreadManager.getInstance();
@@ -109,55 +124,55 @@ public final class Controller {
      * @return the broadcast address
      */
     public static String getBroadcastAddress() {
-        return broadcastAddress;
+        return CONTROLLER.broadcastAddress;
     }
     /**
      * Get the network address.
-     * @return the broadcast address
+     * @return the network address
      */
     public static String getNetworkAddress() {
-        return networkAddress;
+        return CONTROLLER.networkAddress;
     }
     /**
      * Get the ApiHmiImpl.
      * @return instance of ApiHmiImpl
      */
-    public final ApiHmiImpl getApiHmi() {
+    public ApiHmiImpl getApiHmi() {
         return apiHmi;
     }
     /**
      * Get the ApiMusicImpl.
      * @return instance of ApiMusicImpl
      */
-    public final ApiMusicImpl getApiMusic() {
+    public ApiMusicImpl getApiMusic() {
         return apiMusic;
     }
     /**
      * Get the ApiProfileImpl.
      * @return instance of ApiProfileImpl
      */
-    public final ApiProfileImpl getApiProfile() {
+    public ApiProfileImpl getApiProfile() {
         return apiProfile;
     }
     /**
      * Get the ApiExceptionImpl.
      * @return instance of ApiExceptionImpl
      */
-    public final ApiExceptionImpl getApiException() {
+    public ApiExceptionImpl getApiException() {
         return apiException;
     }
     /**
      * Get the NetworkListener.
      * @return instance of NetworkListener
      */
-    public final NetworkListener getNetworkListener() {
-        return NETLISTENER;
+    public NetworkListener getNetworkListener() {
+        return netListener;
     }
     /**
      * Get the WorkManager.
      * @return instance of WorkManager
      */
-    public final ThreadManager getThreadManager() {
+    public ThreadManager getThreadManager() {
         return threadManager;
     }
     /**
@@ -175,9 +190,10 @@ public final class Controller {
      * Add a user to the directory.
      * @param userId Id of the user
      * @param ipAddress Ip address of the user
-     * @throws NetworkDirectoryException An exception is thrown if the userId already exist
+     * @throws NetworkDirectoryException An exception is thrown if the userId
+     * already exist
      */
-    public final void addUserToDirectory(final String userId,
+    public void addUserToDirectory(final String userId,
                final String ipAddress) throws NetworkDirectoryException {
            if (directory.containsKey(userId)) {
                throw new NetworkDirectoryException(
@@ -189,9 +205,10 @@ public final class Controller {
     /**
      * .
      * @param userId Id of the user
-     * @throws NetworkDirectoryException An exception is thrown if the userId doesn't exist
+     * @throws NetworkDirectoryException An exception is thrown if the userId
+     * doesn't exist
      */
-    public final void removeUserFromDirectory(final String userId)
+    public void removeUserFromDirectory(final String userId)
             throws NetworkDirectoryException {
         if (!directory.containsKey(userId)) {
             throw new NetworkDirectoryException(
@@ -207,7 +224,7 @@ public final class Controller {
      * @throws NetworkDirectoryException An exception is thrown if the userId
      * doesn't exist
      */
-    public final String getUserIpFromDirectory(final String userId)
+    public String getUserIpFromDirectory(final String userId)
             throws NetworkDirectoryException {
         if (!directory.containsKey(userId)) {
             throw new NetworkDirectoryException(
@@ -216,6 +233,75 @@ public final class Controller {
         return directory.get(userId);
     }
 
+    /**
+     * @return List containing all IP addresses contained in the directory
+     */
+    public List<String> getIpListFromDirectory() {
+        ArrayList<String> ipList;
+        ipList = new ArrayList();
+
+        for (Entry<String, String> entry : directory.entrySet()) {
+            ipList.add(entry.getValue());
+        }
+
+        return ipList;
+    }
+
+
+    /**
+     * @return List containing all IP addresses contained in the directory
+     */
+    public List<String> getUserListFromDirectory() {
+        ArrayList<String> userList;
+        userList = new ArrayList();
+
+        for (Entry<String, String> entry : directory.entrySet()) {
+            userList.add(entry.getKey());
+        }
+
+        return userList;
+    }
+
+
+    private String findBroadCastAddress(){
+        String brcstAddr;
+        try {
+            int index = 0;
+            if(isMac()) {
+                index = 1;
+            }
+            brcstAddr = NetworkInterface
+                        .getByInetAddress(InetAddress.getLocalHost())
+                          .getInterfaceAddresses()
+                            .get(index).getBroadcast().getHostAddress();
+        } catch (SocketException | UnknownHostException ex) {
+            brcstAddr = "";
+        }
+        return brcstAddr;
+    }
+
+    private final static String OS = System.getProperty("os.name").toLowerCase();
+
+    private boolean isMac() {
+        return (OS.indexOf("mac") >= 0);
+    }
+
+    /*
+    ###   MAY BE USEFUL   ###
+    #########################
+
+    private boolean isWindows() {
+        return (OS.indexOf("win") >= 0);
+    }
+    private boolean isUnix() {
+        return (OS.indexOf("nix") >= 0
+                || OS.indexOf("nux") >= 0
+                || OS.indexOf("aix") >= 0);
+    }
+    */
+
+
+
     // ##################################
     // ## ##       TEST TOOLS       ## ##
     // ##################################
@@ -223,7 +309,7 @@ public final class Controller {
     /**
      * Prepare the app for test.
      */
-    public final void prepareForTest() {
+    public void prepareForTest() {
         this.getThreadManager().prepareForTest();
     }
     /**
@@ -232,4 +318,5 @@ public final class Controller {
     public void endTest() {
         this.getThreadManager().endTest();
     }
+
 }

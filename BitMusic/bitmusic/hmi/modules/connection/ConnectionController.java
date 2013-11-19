@@ -7,11 +7,11 @@
 package bitmusic.hmi.modules.connection;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
-import bitmusic.hmi.modules.onlineusers.OnlineUsersComponent;
 import bitmusic.hmi.patterns.AbstractController;
-import bitmusic.hmi.modules.accountcreation.AccountCreationComponent;
+import bitmusic.hmi.popup.accountcreation.AccountCreationPopUpComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
 /**
@@ -20,10 +20,19 @@ import javax.swing.JOptionPane;
  */
 public final class ConnectionController extends AbstractController<ConnectionModel, ConnectionView> {
 
+    private JDialog popUp;
+
     public ConnectionController(final ConnectionModel model, final ConnectionView view) {
         super(model, view);
     }
 
+    public JDialog getPopUp() {
+        return this.popUp;
+    }
+
+    public void setPopUp(JDialog popUp) {
+        this.popUp = popUp;
+    }
 
     public class ConnectionListener implements ActionListener {
         @Override
@@ -36,24 +45,12 @@ public final class ConnectionController extends AbstractController<ConnectionMod
             if (model.doConnection(view.getLoginField().getText(), view.getPasswordField().getText()) == true) {
                 WindowComponent win = WindowComponent.getInstance();
                 // On enlève la ConnectionView des "objets utilisés"
-                win.getWindowView().removeView(ConnectionController.this.getView());
+                win.getWindowView().removeView(view);
 
-                // TODO : Création des différents Components...
-
-                // Création du OnlineUsersComponent et attache de la View aux "objets utilisés"
-                win.setOnlineUsersComponent(new OnlineUsersComponent());
-                win.getWindowView().addView(win.getOnlineUsersComponent().getView());
-
-                // Récupérer une liste des utilisateurs déjà connectés et la passer au OnlineUsersModel
-                // TODO : en attente de la disponibilité de la méthode dans l'API
-                // ArrayList<User> currentOnlineUsers = win.getApiNetwork().getListUser();
-                // onlineUsersComponent.getModel().setListUsersOnline(currentOnlineUsers);
-
-                // NB : Pas besoin de prévenir Network qu'on s'est connecté, Profile le fait lors de l'appel à doConnection()
-                // => on est censé recevoir un notifyNewConnection() de Network pour notre propre connection
-
+                //On initialise tous les composants dans la vue principale
+                win.initAllComponents();
             } else {
-                JOptionPane.showMessageDialog(ConnectionController.this.getView(), "Connexion refusée : pseudo et/ou mot de passe incorrect(s)", "Connexion refusée", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(view, "Connexion refusée : pseudo et/ou mot de passe incorrect(s)", "Connexion refusée", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -69,21 +66,18 @@ public final class ConnectionController extends AbstractController<ConnectionMod
         }
     }
 
-    /// listener du bouton 'creer un compte'
     public class CreateNewUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("---- Clic sur le bouton CreateNewUser");
 
-            ConnectionModel model = ConnectionController.this.getModel();
             WindowComponent win = WindowComponent.getInstance();
+            AccountCreationPopUpComponent accountCreationPopUpComponent = new AccountCreationPopUpComponent();
 
-            // On enlève la ConnectionView des "objets utilisés"
-            win.getWindowView().removeView(ConnectionController.this.getView());
-
-            // Création du OnlineUsersComponent et attache de la View aux "objets utilisés"
-            win.setAccountCreationComponent(new AccountCreationComponent());
-            win.getWindowView().addView(win.getAccountCreationComponent().getView());
+            popUp = new JDialog(win.getWindowView(), "Créer un compte", true);
+            popUp.add(accountCreationPopUpComponent.getView().getPanel());
+            popUp.pack();
+            popUp.show();
         }
     }
 }

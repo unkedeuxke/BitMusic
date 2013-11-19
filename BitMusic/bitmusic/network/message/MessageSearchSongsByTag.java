@@ -5,7 +5,11 @@
  */
 
 package bitmusic.network.message;
+import bitmusic.music.api.ApiMusicImpl;
+import bitmusic.music.data.SongLibrary;
+import bitmusic.network.main.Controller;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Message used to search songs with tags on the LAN.
@@ -25,7 +29,7 @@ public final class MessageSearchSongsByTag extends AbstractMessage {
     /**
      * List of tags.
      */
-    private ArrayList<String> tagList;
+    private List<String> tagList;
 
     /**
      * Constructor.
@@ -38,7 +42,7 @@ public final class MessageSearchSongsByTag extends AbstractMessage {
      */
     public MessageSearchSongsByTag(final EnumTypeMessage paramType,
             final String paramIpSource, final String paramIpDest,
-            final String paramSearchId, final ArrayList<String> paramTagList,
+            final String paramSearchId, final List<String> paramTagList,
             final String paramUserId) {
         super(paramType, paramIpSource, paramIpDest);
         searchId = paramSearchId;
@@ -51,7 +55,26 @@ public final class MessageSearchSongsByTag extends AbstractMessage {
      */
     @Override
     public void treatment() {
+        final SongLibrary songLib = ApiMusicImpl.getInstance().
+                searchSongsByTags(
+                    //search id
+                    this.searchId,
+                    //tag list
+                    this.tagList);
 
+        final MessageSendSongList message = new MessageSendSongList(
+                //type of message
+                EnumTypeMessage.SendSongList,
+                //ip source
+                Controller.getNetworkAddress(),
+                //ip dest
+                this.ipSource,
+                //search id
+                this.searchId,
+                //song library
+                songLib);
+
+        Controller.getInstance().getThreadManager().assignTaskToHermes(message);
     }
 
     /**
@@ -90,7 +113,7 @@ public final class MessageSearchSongsByTag extends AbstractMessage {
      * Getter og the tagList attribute.
      * @return ArrayList<String> List of tags
      */
-    public ArrayList<String> getTagList() {
+    public List<String> getTagList() {
         return tagList;
     }
 

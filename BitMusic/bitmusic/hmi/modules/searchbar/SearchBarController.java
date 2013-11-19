@@ -7,6 +7,8 @@
 package bitmusic.hmi.modules.searchbar;
 
 import bitmusic.hmi.patterns.AbstractController;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 /**
  *
@@ -16,5 +18,16 @@ public final class SearchBarController extends AbstractController<SearchBarModel
 
     public SearchBarController(final SearchBarModel model, final SearchBarView view) {
         super(model, view);
+    }
+
+    public class ResearchListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("---- Clic sur le bouton Rechercher");
+
+            SearchBarModel model =  SearchBarController.this.getModel();
+
+            // TODO : lancer la requête, etc...
+        }
     }
 }

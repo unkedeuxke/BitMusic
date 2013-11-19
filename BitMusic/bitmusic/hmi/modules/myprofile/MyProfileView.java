@@ -9,8 +9,11 @@ package bitmusic.hmi.modules.myprofile;
 import bitmusic.hmi.patterns.AbstractView;
 import bitmusic.hmi.patterns.Observable;
 import java.awt.Dimension;
-import java.awt.GridLayout;
+import javax.swing.GroupLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 /**
  *
@@ -24,10 +27,14 @@ public final class MyProfileView extends AbstractView<MyProfileController> {
     private final JButton mySongsButton = new JButton("Mes morceaux");
     private final JButton logoutButton = new JButton("Déconnexion");
     private final JButton importSongButton = new JButton("Importer un titre");
-    // TO DO : ajouter l'image de l'avatar
+    private final ImageIcon avatarImage = new ImageIcon(this.getClass().getResource("/images/avatar3.png"));
+    private JLabel avatarLabel;
+    // TODO : récupérer l'image de l'avatar (pas en dur)
 
     public MyProfileView() {
         super();
+        this.avatarImage.setDescription("Votre avatar");
+        this.avatarLabel = new JLabel("", this.avatarImage, JLabel.CENTER);
     }
 
     public JButton getMyProfileButton() {
@@ -50,36 +57,73 @@ public final class MyProfileView extends AbstractView<MyProfileController> {
     public void initPanel() {
         System.out.println("--- MyProfileView.initPanel()");
 
-        final Dimension d = new Dimension(80, 20);
+        final Dimension d = new Dimension(80, 10);
 
         this.myProfileButton.setSize(d);
+
+
         this.mySongsButton.setSize(d);
         this.logoutButton.setSize(d);
+        this.logoutButton.addActionListener(this.getController().new LogoutListener());
+
         this.importSongButton.setSize(d);
+        this.importSongButton.addActionListener(this.getController().new ImportNewSongListener());
 
-        this.myProfileButton.addActionListener(this.getController().new LogoutListener());
+        /*GridLayout layout = new GridLayout(0,2);
+        layout.setHgap(5);
+        layout.setVgap(5);
 
-        GridLayout layout = new GridLayout(0,2);
         this.getPanel().setLayout(layout);
-        this.getPanel().add(myProfileButton);
-        this.getPanel().add(mySongsButton);
-        this.getPanel().add(logoutButton);
-        this.getPanel().add(importSongButton);
+
+        this.getPanel().add(this.myProfileButton);
+        this.getPanel().add(this.mySongsButton);
+        this.getPanel().add(this.logoutButton);
+        this.getPanel().add(this.importSongButton);
+        System.out.println("--- ImageIcon.init(), size : " + avatarImage.getIconHeight());
+        this.getPanel().add(this.avatarLabel);*/
 
 
-        /*GroupLayout layout = new GroupLayout(this.getPanel());
+        this.avatarLabel.setToolTipText("Avatar");
+        this.avatarLabel.setAlignmentX(CENTER_ALIGNMENT);
+        this.avatarLabel.setAlignmentY(CENTER_ALIGNMENT);
+
+        GroupLayout layout = new GroupLayout(this.getPanel());
         this.getPanel().setLayout(layout);
+
+        layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(this.myProfileButton)
+                    .addComponent(this.mySongsButton)
+                    .addComponent(this.importSongButton)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(this.logoutButton)
+                    .addComponent(this.avatarLabel)
+                )
+        );
 
         layout.setVerticalGroup(
             layout.createSequentialGroup()
-                .addComponent(myProfileButton)
-                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(mySongsButton)
-                ).addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE))
-                .addComponent(disconnectButton)
-                    .addComponent(importSongButton)
-        );*/
-        // TODO
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(this.myProfileButton)
+                    .addComponent(this.logoutButton)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                   // .addComponent(this.logoutButton)
+                    .addComponent(this.avatarLabel)
+                    .addComponent(this.mySongsButton)
+                )
+                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(this.importSongButton)
+                )
+        );
+
+        layout.setAutoCreateGaps(true);
+        layout.linkSize(SwingConstants.HORIZONTAL, this.myProfileButton, this.mySongsButton);
+        layout.linkSize(SwingConstants.HORIZONTAL, this.myProfileButton, this.logoutButton);
+        layout.linkSize(SwingConstants.HORIZONTAL, this.myProfileButton, this.importSongButton);
+        // TO FINISH
     }
 
     @Override

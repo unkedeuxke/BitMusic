@@ -10,7 +10,6 @@ import bitmusic.hmi.api.ApiHmiImpl;
 import bitmusic.profile.api.ApiProfileImpl;
 import bitmusic.music.api.ApiMusicImpl;
 import bitmusic.network.main.Controller;
-import bitmusic.hmi.modules.accountcreation.AccountCreationComponent;
 import bitmusic.hmi.modules.categories.CategoriesComponent;
 import bitmusic.hmi.modules.centralarea.CentralAreaComponent;
 import bitmusic.hmi.modules.connection.ConnectionComponent;
@@ -36,7 +35,6 @@ public class WindowComponent {
     private ApiMusicImpl apiMusic;
     private bitmusic.network.main.ApiHmiImpl apiNetwork;
 
-    private AccountCreationComponent accountCreationComponent;
     private CategoriesComponent categoriesComponent;
     private ConnectionComponent connectionComponent;
     private MyProfileComponent myProfileComponent;
@@ -64,6 +62,7 @@ public class WindowComponent {
 
         this.setConnectionComponent(new ConnectionComponent());
         this.view.addView(this.getConnectionComponent().getView());
+
     }
 
     /** Holder */
@@ -77,8 +76,16 @@ public class WindowComponent {
             return WindowComponentHolder.instance;
     }
 
+    public WindowModel getWindowModel() {
+        return this.model;
+    }
+
     public WindowView getWindowView() {
         return this.view;
+    }
+
+    public WindowController getWindowController() {
+        return this.controller;
     }
 
     public ApiHmiImpl getApiHmi() {
@@ -101,7 +108,7 @@ public class WindowComponent {
         return this.apiMusic;
     }
 
-    public void setApiMusic(ApiMusicImpl apiNetwork) {
+    public void setApiMusic(ApiMusicImpl apiMusic) {
         this.apiMusic = apiMusic;
     }
 
@@ -111,14 +118,6 @@ public class WindowComponent {
 
     public void setApiNetwork(bitmusic.network.main.ApiHmiImpl apiNetwork) {
         this.apiNetwork = apiNetwork;
-    }
-
-    public AccountCreationComponent getAccountCreationComponent() {
-        return this.accountCreationComponent;
-    }
-
-    public void setAccountCreationComponent(AccountCreationComponent accountCreationComponent) {
-        this.accountCreationComponent = accountCreationComponent;
     }
 
     public CategoriesComponent getCategoriesComponent() {
@@ -195,5 +194,35 @@ public class WindowComponent {
                 listTabsComponent.remove(i);
             }
         }
+    }
+
+    public void initAllComponents() {
+        // TODO : Création des différents Components...
+
+        //TODO
+//        this.setCategoriesComponent(new CategoriesComponent());
+//        this.getWindowView().addView(this.getCategoriesComponent().getView());
+
+        this.setSearchBarComponent(new SearchBarComponent());
+        this.getWindowView().addView(this.getSearchBarComponent().getView());
+
+        this.setMyProfileComponent(new MyProfileComponent());
+        this.getWindowView().addView(this.getMyProfileComponent().getView());
+
+        this.setOnlineUsersComponent(new OnlineUsersComponent());
+        this.getWindowView().addView(this.getOnlineUsersComponent().getView());
+        // Récupérer une liste des utilisateurs déjà connectés et la passer au OnlineUsersModel
+        // TODO : en attente de la disponibilité de la méthode dans l'API
+        // ArrayList<User> currentOnlineUsers = win.getApiNetwork().getListUser();
+        // onlineUsersComponent.getModel().setListUsersOnline(currentOnlineUsers);
+        // NB : Pas besoin de prévenir Network qu'on s'est connecté, Profile le fait lors de l'appel à doConnection()
+        // => on est censé recevoir un notifyNewConnection() de Network pour notre propre connection
+
+        this.setPlayBarComponent(new PlayBarComponent());
+        this.getWindowView().addView(this.getPlayBarComponent().getView());
+
+        //TODO
+//        this.setCentralAreaComponent(new CentralAreaComponent());
+//        this.getWindowView().addView(this.getCentralAreaComponent().getView());
     }
 }
