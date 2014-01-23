@@ -7,31 +7,121 @@
 package bitmusic.hmi.modules.searchbar;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
-import bitmusic.hmi.modules.centralarea.CentralAreaView;
+import bitmusic.hmi.modules.centralarea.CentralAreaComponent;
 import bitmusic.hmi.modules.tab.TabComponent;
 import bitmusic.hmi.patterns.AbstractController;
+import bitmusic.music.data.Song;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 
 /**
  *
- * @author unkedeuxke
+ * @author IHM
  */
 public final class SearchBarController extends AbstractController<SearchBarModel, SearchBarView> {
 
+    /**
+     * Constructor of SearchBarController
+     * @param model
+     * @param view
+     */
     public SearchBarController(final SearchBarModel model, final SearchBarView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on research button
+     */
     public class ResearchListener implements ActionListener {
+        /**
+         * Searches a song by title, tag, author or album
+         * If the research had already been done, we refresh its tab
+         * @param e
+         */
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("---- Clic sur le bouton Rechercher");
 
-            //SearchBarModel model =  SearchBarController.this.getModel();
+            WindowComponent win = WindowComponent.getInstance();
+            SearchBarView view = SearchBarController.this.getView();
+            SearchBarModel model = SearchBarController.this.getModel();
 
-            CentralAreaView centralAreaView = WindowComponent.getInstance().getCentralAreaComponent().getView();
-            centralAreaView.addTab(new TabComponent().getView());
+            // Récupération des Songs correspondant à la recherche
+            String requestOrigin = ORIGIN_SEARCH_BAR;
+            String requestText = view.getSearchField().getText();
+            String requestFilter;
+
+            if (view.getNoneButton().isSelected()) {
+                requestFilter = FILTER_NONE;
+            }
+            else if (view.getTitleButton().isSelected()) {
+                requestFilter = FILTER_TITLE;
+            }
+            else if (view.getAuthorButton().isSelected()) {
+                requestFilter = FILTER_AUTHOR;
+            }
+            else if (view.getAlbumButton().isSelected()) {
+                requestFilter = FILTER_AUTHOR;
+            }
+            else {
+                requestFilter = FILTER_TAG;
+            }
+
+            // Vérification qu'une recherche identique n'a pas déjà été faite
+            CentralAreaComponent centralAreaComponent = win.getCentralAreaComponent();
+
+            TabComponent tabToFocusOn = null;
+
+            ArrayList<TabComponent> listTabComponents = centralAreaComponent.getView().getListTabComponent();
+            for (int i = 0; i < listTabComponents.size(); i++) {
+                Boolean sameFilter = listTabComponents.get(i).getModel().getRequestFilter().equals(requestFilter);
+                Boolean sameOrigin = listTabComponents.get(i).getModel().getRequestOrigin().equals(requestOrigin);
+                Boolean sameText = listTabComponents.get(i).getModel().getRequestText().equals(requestText);
+
+                if (sameFilter && sameOrigin && sameText) {
+                    tabToFocusOn = listTabComponents.get(i);
+                }
+            }
+
+            // Si ce n'est pas le cas alors on crée un nouveau Tab
+            if (tabToFocusOn == null) {
+                tabToFocusOn = new TabComponent();
+
+                // Stockage des détails de la requête dans le TabComponent
+                tabToFocusOn.getModel().setRequestFilter(requestFilter);
+                tabToFocusOn.getModel().setRequestOrigin(requestOrigin);
+                tabToFocusOn.getModel().setRequestText(requestText);
+
+                // Ajout du Tab dans le CentralAreaComponent (qui ajoute en même temps la vue)
+                centralAreaComponent.getView().addTabComponent(tabToFocusOn);
+            }
+
+            ArrayList<Song> songResults = new ArrayList();
+            int tabId = tabToFocusOn.getView().getTabId();
+
+            if (view.getNoneButton().isSelected()) {
+                songResults = model.searchSongsWithoutFilter(tabId, requestText);
+            }
+            else if (view.getTitleButton().isSelected()) {
+                songResults = model.searchSongsWithTitleFilter(tabId, requestText);
+            }
+            else if (view.getAuthorButton().isSelected()) {
+                songResults = model.searchSongsWithAuthorFilter(tabId, requestText);
+            }
+            else if (view.getAlbumButton().isSelected()) {
+                songResults = model.searchSongsWithAlbumFilter(tabId, requestText);
+            }
+            else {
+                songResults = model.searchSongsWithTagFilter(tabId, requestText);
+            }
+
+            // On actualise les Songs à l'intérieur du Tab (ancien ou nouveau, peu importe !)
+            tabToFocusOn.getModel().getModeleTable().removeAllSongs();
+            tabToFocusOn.getModel().getModeleTable().setSong(songResults);
+
+            // Met le focus sur le Tab de notre requête
+            centralAreaComponent.getView().getTabbedPane().setSelectedComponent(tabToFocusOn.getView().getPanel());
         }
     }
 }

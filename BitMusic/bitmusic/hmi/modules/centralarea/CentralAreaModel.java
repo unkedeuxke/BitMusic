@@ -10,10 +10,13 @@ import bitmusic.hmi.patterns.AbstractModel;
 
 /**
  *
- * @author unkedeuxke
+ * @author IHM
  */
 public final class CentralAreaModel extends AbstractModel {
 
+    /**
+     * Constructor of CentralAreaModel
+     */
     public CentralAreaModel() {
         super();
     }

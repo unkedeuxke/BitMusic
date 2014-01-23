@@ -6,23 +6,31 @@
 
 package bitmusic.network.main;
 
+import bitmusic.music.data.Comment;
+import bitmusic.music.data.Song;
 import bitmusic.network.api.ApiHmi;
+import bitmusic.network.exception.NetworkDirectoryException;
 import bitmusic.network.exception.NetworkException;
 import bitmusic.network.message.EnumTypeMessage;
+import bitmusic.network.message.MessageAddComment;
 import bitmusic.network.message.MessageGetSongFile;
 import bitmusic.network.message.MessageLogOut;
+import bitmusic.network.message.MessageGetUser;
+import bitmusic.network.message.MessageNotifyNewConnection;
+import bitmusic.network.message.MessageRateSong;
+import bitmusic.profile.classes.User;
 import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Implementation of the API we provide to HMI.
  * @author florian, alexis
  */
 public final class ApiHmiImpl implements ApiHmi {
     /**
     * Singleton implementation.
     */
-    private static final ApiHmiImpl APIHMIIMPL = new ApiHmiImpl();
+    private static final ApiHmiImpl API_HMI_IMPL = new ApiHmiImpl();
 
     /**
      * Private constructor for singleton pattern.
@@ -30,16 +38,44 @@ public final class ApiHmiImpl implements ApiHmi {
     private ApiHmiImpl() { }
 
     /**
-     * .
+     * Getter of the only instance of this class.
      * @return Unique instance of ApiHmiImpl
      */
     protected static ApiHmiImpl getInstance() {
-        return APIHMIIMPL;
+        return API_HMI_IMPL;
     }
 
     /*########################################################################*/
     /* IMPLEMENTED METHODS */
     /*########################################################################*/
+    /**
+     * Send a comment about a song to a distant user.
+     *
+     * @param song song concerned
+     * @param comment the new comment to add
+     * @throws NetworkException thrown when the user doesn't have
+     *                           sufficient rights
+    */
+    @Override
+    public void addComment(final Song song, final Comment comment)
+            throws NetworkException {
+        //Get the source address
+        //Warning, it may emmit an exception thrown to the calling method!
+        final String sourceAddress = Controller.getNetworkAddress();
+
+        final String destAddress = Controller.getInstance().
+        getUserIpFromDirectory(song.getOwnerId());
+
+
+        final MessageAddComment message = new MessageAddComment(
+                EnumTypeMessage.AddComment,
+                sourceAddress,
+                destAddress,
+                bitmusic.profile.api.ApiProfileImpl.getApiProfile().getCurrentUser().getUserId(),
+                song,
+                comment);
+        Controller.getInstance().getThreadManager().assignTaskToHermes(message);
+    }
     /**
      * Notify every distant user that we are logging out.
      *
@@ -48,11 +84,6 @@ public final class ApiHmiImpl implements ApiHmi {
      */
     @Override
     public void logOut(final String userId) throws NetworkException {
-        //Get the source address
-        //Warning, it may emmit an exception thrown to the calling method!
-        final String sourceAddress = Controller.getNetworkAddress();
-
-        MessageLogOut message = null;
 
         //Loop on the directory
         final Map<String, String> userDirectory = Controller.getInstance().
@@ -62,11 +93,11 @@ public final class ApiHmiImpl implements ApiHmi {
             //entry.getValue()) contains remote user IP
 
             //Construct a message
-            message = new MessageLogOut(
+            final MessageLogOut message = new MessageLogOut(
                 //Type of message
                 EnumTypeMessage.LogOut,
                 //Source address
-                sourceAddress,
+                Controller.getNetworkAddress(),
                 //Destination address
                 entry.getValue(),
                 //userId
@@ -90,8 +121,31 @@ public final class ApiHmiImpl implements ApiHmi {
     @Override
     public void getUser(final String operator, final String userId,
             final String researchId) throws NetworkException {
-        Controller.getInstance().getApiProfile().
-                getUser(operator, userId, researchId);
+        //Get the source address
+        //Warning, it may emmit an exception thrown to the calling method!
+        final String sourceAddress = Controller.getNetworkAddress();
+
+        //Get the destination address
+        final String destAddress = Controller.getInstance().
+                getUserIpFromDirectory(userId);
+
+        final MessageGetUser message = new MessageGetUser(
+                //type of the message
+                EnumTypeMessage.GetUser,
+                //source address
+                sourceAddress,
+                //destination address
+                destAddress,
+                //ID of the user that owns the profile
+                userId,
+                //ID of the user that asks for the profile
+                operator,
+                //ID of the research
+                researchId);
+
+        //Give the message to a worker...
+            Controller.getInstance().getThreadManager().
+                    assignTaskToHermes(message);
     }
     /**
      * Ask for a remote song file.
@@ -111,7 +165,7 @@ public final class ApiHmiImpl implements ApiHmi {
         final String sourceAddress = Controller.getNetworkAddress();
 
         //Get the destination address
-        String destinationAddress = Controller.getInstance().
+        final String destAddress = Controller.getInstance().
                 getUserIpFromDirectory(userId);
 
         final MessageGetSongFile message = new MessageGetSongFile(
@@ -120,7 +174,7 @@ public final class ApiHmiImpl implements ApiHmi {
                 //source address
                 sourceAddress,
                 //destination address
-                destinationAddress,
+                destAddress,
                 //ID of the user that owns the song
                 userId,
                 //ID of the song
@@ -141,6 +195,32 @@ public final class ApiHmiImpl implements ApiHmi {
 
         Controller.getInstance().getThreadManager()
                 .getExecutorService().shutdown();
+
+    }
+
+    /**
+     * Rate a distant song.
+     * @param paramSong The song to rate
+     * @param paramUserId ID of the user that rates the song
+     */
+    @Override
+    public void rateSong(final Song paramSong, final String paramUserId) {
+        final String owner = paramSong.getOwnerId();
+        try {
+            final MessageRateSong message = new MessageRateSong(
+                EnumTypeMessage.RateSong,
+                Controller.getNetworkAddress(),
+                Controller.getInstance().getUserIpFromDirectory(owner),
+                paramSong,
+                paramUserId);
+
+            Controller.getInstance().
+                    getThreadManager().assignTaskToHermes(message);
+
+        } catch (NetworkDirectoryException e) {
+
+        }
+
     }
 
     /**
@@ -151,5 +231,33 @@ public final class ApiHmiImpl implements ApiHmi {
     @Override
     public List<String> getAllUserId() {
         return Controller.getInstance().getUserListFromDirectory();
+    }
+
+    /**
+    * Notify connection of a user and pass his profile to broadcast it.
+    *
+    * @param user the complete user who just connected
+    */
+    @Override
+    public void notifyNewConnection(final User user) {
+        //Get the source address
+        final String sourceAddress = Controller.getNetworkAddress();
+
+        //Construct the message
+        final MessageNotifyNewConnection message =
+                new MessageNotifyNewConnection(
+                    //Type of message
+                    EnumTypeMessage.NotifyNewConnection,
+                    //Source address
+                    sourceAddress,
+                    //Destination address (Everyone)
+                    Controller.getBroadcastAddress(),
+                    //idUser
+                    user,
+                    //Get the profile
+                    true);
+
+        //Give the message to a worker...
+        Controller.getInstance().getThreadManager().assignTaskToHermes(message);
     }
 }

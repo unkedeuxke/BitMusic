@@ -8,28 +8,38 @@ package bitmusic.hmi.popup.importsong;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractController;
-import bitmusic.hmi.patterns.AbstractView;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- *
- * @author unkedeuxke
+ * Controller class of ImportSongPopUp
+ * @author IHM
  */
 public final class ImportSongPopUpController extends AbstractController<ImportSongPopUpModel, ImportSongPopUpView> {
 
+    /**
+     * Contructor of ImportSongPopUpController
+     * @param model
+     * @param view
+     */
     public ImportSongPopUpController(final ImportSongPopUpModel model, final ImportSongPopUpView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on browse button
+     * This listener allows to chose the song to import
+     * Due to a filter, only mp3 files can be chosen
+     * @see JFileChooser
+     * @see FileNameExtensionFilter
+     */
     public class FileBrowseListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -46,6 +56,10 @@ public final class ImportSongPopUpController extends AbstractController<ImportSo
         }
     }
 
+    /**
+     * Listener on add tag button
+     * Adds a tag to the song to import
+     */
     public class AddNewTagListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -61,6 +75,9 @@ public final class ImportSongPopUpController extends AbstractController<ImportSo
         }
     }
 
+    /**
+     * Listener on cancel button
+     */
     public class CancelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -69,6 +86,13 @@ public final class ImportSongPopUpController extends AbstractController<ImportSo
         }
     }
 
+    /**
+     * Listener on submit button
+     * If all the compulsory fields aren't checked, an error message is shown.
+     * If all the compulsory fields are checked, we use the API of musique module.
+     * And finally, we update the user pofil
+     * If the importation fails, a warning message is shown
+     */
     public class SubmitListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -77,29 +101,44 @@ public final class ImportSongPopUpController extends AbstractController<ImportSo
             ImportSongPopUpView view = ImportSongPopUpController.this.getView();
             List<String> tag = view.getTagList().getSelectedValuesList();
 
-            if ( ImportSongPopUpController.this.checkAllCompulsoryFields() ){
+            Boolean isImport = false;
 
-//                TODO : Décommenter lors de l'intégration
-//                win.getApiMusic().importSong(
-//                        view.getFileField().getText(),
-//                        view.getTitleField().getText(),
-//                        view.getArtistField().getText(),
-//                        view.getAlbumField().getText(),
-//                        new LinkedList<String>(view.getTagList().getSelectedValuesList()),
-//                        null);
-                win.getMyProfileComponent().getController().getPopUp().dispose();
-            }
-            else {
+            if (!ImportSongPopUpController.this.checkAllCompulsoryFields()){
                 JOptionPane.showMessageDialog(
                         view,
                         "Tous les champs obligatoires doivent être renseignés !",
                         "Attention aux champs",
                         JOptionPane.WARNING_MESSAGE);
             }
+            else {
+                isImport = win.getApiMusic().importSong(
+                        view.getFileField().getText(),
+                        view.getTitleField().getText(),
+                        view.getArtistField().getText(),
+                        view.getAlbumField().getText(),
+                        new LinkedList<String>(view.getTagList().getSelectedValuesList()),
+                        null);
+
+                if (isImport) {
+                    win.getMyProfileComponent().getController().new MySongsListener().actionPerformed(null); // ligne à supprimer si possible
+                }
+                else {
+                    JOptionPane.showMessageDialog(
+                        view,
+                        "Le fichier n'a pas pu être importé !",
+                        "Erreur",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+                win.getMyProfileComponent().getController().getPopUp().dispose();
+            }
 
         }
     }
 
+    /**
+     * Checks if all the compulsory fields are filled
+     * @return boolean
+     */
     public boolean checkAllCompulsoryFields(){
         ArrayList<JTextField> listCompulsoryFields = this.getView().getListCompulsoryFields();
 

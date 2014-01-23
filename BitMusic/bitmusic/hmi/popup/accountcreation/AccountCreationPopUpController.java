@@ -8,37 +8,38 @@ package bitmusic.hmi.popup.accountcreation;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractController;
-import bitmusic.hmi.popup.importsong.ImportSongPopUpController;
-import bitmusic.hmi.popup.importsong.ImportSongPopUpView;
-import bitmusic.hmi.popup.modifyprofile.ModifyProfilePopUpController;
 import bitmusic.profile.utilities.ProfileExceptions;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.io.File;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- *
- * @author unkedeuxke
+ * Controller class of AccountCreationPopUp
+ * @author IHM
  */
 public final class AccountCreationPopUpController extends AbstractController<AccountCreationPopUpModel, AccountCreationPopUpView> {
 
+    /**
+     * Constructor
+     * @param model
+     * @param view
+     */
     public AccountCreationPopUpController(final AccountCreationPopUpModel model, final AccountCreationPopUpView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on browse button to get an avatar
+     */
     public class AvatarBrowseListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -55,6 +56,9 @@ public final class AccountCreationPopUpController extends AbstractController<Acc
         }
     }
 
+    /**
+     * Listener on cancel button
+     */
     public class CancelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -63,6 +67,12 @@ public final class AccountCreationPopUpController extends AbstractController<Acc
         }
     }
 
+    /**
+     * Listener on create button to create a new user
+     *
+     * @throws IOException
+     *
+     */
     public class CreateNewUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -70,8 +80,6 @@ public final class AccountCreationPopUpController extends AbstractController<Acc
 
             WindowComponent win = WindowComponent.getInstance();
             AccountCreationPopUpView view = AccountCreationPopUpController.this.getView();
-            Boolean canCreate = true;
-            Boolean canClose = true;
 
             //login password firstname lastname birth avatar
             String login = view.getLoginField().getText();
@@ -82,63 +90,91 @@ public final class AccountCreationPopUpController extends AbstractController<Acc
             String birthdate = view.getBirthdateField().getText();
             String avatar = view.getAvatarField().getText();
 
-            if ( !password.equals(confirm) ) {
-                canClose = false;
-                canCreate = false;
-                JOptionPane.showMessageDialog(
-                        view,
-                        "Les deux mots de passe entrés ne concordent pas !",
-                        "Erreur dans la date",
-                        JOptionPane.WARNING_MESSAGE);
-            }
-
-            else if ( AccountCreationPopUpController.this.checkAllCompulsoryFields() ){
-                Calendar cal = Calendar.getInstance();
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                sdf.setLenient(false);
-                //Permet de vérifier aisément si le format de la date est correcte !
+            //Avatar par défault
+            if ( avatar.length() <= 0 ) {
                 try {
-                    cal.setTime(sdf.parse(birthdate));
-                } catch (ParseException ex) {
-                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
-                    canClose = false;
-                    canCreate = false;
+                    String current = new java.io.File(".").getCanonicalPath();
+                    avatar = current +
+                            File.separator +
+                            "Bitmusic" +
+                            File.separator +
+                            "bitmusic" +
+                            File.separator +
+                            "hmi" +
+                            File.separator +
+                            "modules" +
+                            File.separator +
+                            "myprofile" +
+                            File.separator +
+                            "images" +
+                            File.separator +
+                            "defaultAvatar_120.png";
+                    //System.out.println("----> " + avatar);
+                } catch (IOException ex) {
+                    //Logger.getLogger(AccountCreationPopUpController.class.getName()).log(Level.SEVERE, null, ex);
                     JOptionPane.showMessageDialog(
                         view,
-                        "Le format de la date n'est pas valide !",
-                        "Erreur dans la date",
-                        JOptionPane.WARNING_MESSAGE);
+                        "Création impossible !",
+                        "Erreur d'accès fichier",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
-
-                if ( canCreate ) {
-                    try {
-                        //login password firstname lastname birth avatar
-                        win.getApiProfile().createUser(login, password, firstname, lastname, cal, avatar);
-                    } catch (ProfileExceptions ex) {
-                        Logger.getLogger(AccountCreationPopUpController.class.getName()).log(Level.SEVERE, null, ex);
-                        JOptionPane.showMessageDialog(
-                            view,
-                            "Erreur : le compte n'a pas pu être créé !",
-                            "Erreur dans la création",
-                            JOptionPane.WARNING_MESSAGE);
-                    }
-                }
-
-                if ( canClose ) {
-                    win.getConnectionComponent().getController().getPopUp().dispose();
-                }
-
             }
-            else {
+
+            if ( !password.equals(confirm) ) {
                 JOptionPane.showMessageDialog(
-                        view,
-                        "Tous les champs obligatoires doivent être renseignés !",
-                        "Attention aux champs",
-                        JOptionPane.WARNING_MESSAGE);
+                    view,
+                    "Les deux mots de passe entrés ne concordent pas !",
+                    "Erreur de mot de passe",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            if ( !AccountCreationPopUpController.this.checkAllCompulsoryFields() ) {
+                JOptionPane.showMessageDialog(
+                    view,
+                    "Tous les champs obligatoires doivent être renseignés !",
+                    "Attention aux champs",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            Calendar cal = Calendar.getInstance();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+            sdf.setLenient(false);
+
+            // Permet de vérifier si le format de la date est correct
+            try {
+                cal.setTime(sdf.parse(birthdate));
+            } catch (ParseException ex) {
+                //Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(
+                    view,
+                    "Le format de la date n'est pas valide !",
+                    "Erreur de date",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            try {
+                //login password firstname lastname birth avatar
+                win.getApiProfile().createUser(login, password, firstname, lastname, cal, avatar);
+                win.getConnectionComponent().getController().getPopUp().dispose();
+            } catch (ProfileExceptions ex) {
+                //Logger.getLogger(AccountCreationPopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(
+                    view,
+                    "Erreur : le compte n'a pas pu être créé !",
+                    "Erreur de création",
+                    JOptionPane.WARNING_MESSAGE);
             }
         }
     }
 
+    /**
+     * Check all the compulsory fields
+     * @return boolean
+     */
     public boolean checkAllCompulsoryFields(){
         ArrayList<JTextField> listCompulsoryFields = this.getView().getListCompulsoryFields();
 
@@ -149,5 +185,24 @@ public final class AccountCreationPopUpController extends AbstractController<Acc
         }
 
         return true;
+    }
+
+    /**
+     * Listener on reset button
+     */
+    public class ResetListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            System.out.println("---- Clic sur le bouton Reset");
+
+            // Pas besoin du Model ici : on agit directement sur la View
+            AccountCreationPopUpController.this.getView().getAvatarField().setText("");
+            AccountCreationPopUpController.this.getView().getBirthdateField().setText("");
+            AccountCreationPopUpController.this.getView().getConfirmField().setText("");
+            AccountCreationPopUpController.this.getView().getFirstnameField().setText("");
+            AccountCreationPopUpController.this.getView().getLastnameField().setText("");
+            AccountCreationPopUpController.this.getView().getLoginField().setText("");
+            AccountCreationPopUpController.this.getView().getPasswordField().setText("");
+        }
     }
 }

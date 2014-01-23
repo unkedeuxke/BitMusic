@@ -8,30 +8,25 @@ package bitmusic.hmi.popup.accountcreation;
 
 import bitmusic.hmi.patterns.AbstractView;
 import bitmusic.hmi.patterns.Observable;
-import java.awt.Dimension;
-import java.awt.event.ActionListener;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import javax.swing.GroupLayout;
 import javax.swing.JButton;
-import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 
 //import com.toedter.calendar.JDateChooser;
 /**
- *
- * @author unkedeuxke
+ * View class of AccountCreationPopUpView
+ * This class is the view of the connexion window
+ * @author IHM
  */
 public final class AccountCreationPopUpView extends AbstractView<AccountCreationPopUpController> {
 
-    private static final String type = "CENTER";
+    private static final String type = "POPUP";
     private final JLabel accountCreationLabel = new JLabel("<html><u>Création d'un nouveau compte utilisateur</u></html>");
     private final JButton cancelButton = new JButton("Annuler");
-    private final JButton resetButton = new JButton("Reset");
+    private final JButton resetButton = new JButton("Reinitialiser");
     private final JButton browseButton = new JButton("Parcourir...");
     private final JButton createUserButton = new JButton("Créer");
     private final JLabel birthdateLabel = new JLabel("Date de naissance (*)");
@@ -51,13 +46,18 @@ public final class AccountCreationPopUpView extends AbstractView<AccountCreation
     private JTextField lastnameField = new JTextField("");
     private JTextField avatarField = new JTextField("");
 
-    private ArrayList<JTextField> listCompulsoryFields = new ArrayList<>();
+    private ArrayList<JTextField> listCompulsoryFields = new ArrayList();
 
-
+    /**
+     * Constructor of AccountCreationPopUpView
+     */
     public AccountCreationPopUpView() {
         super();
     }
 
+    /**
+     * Initializes the account creation view
+     */
     @Override
     public void initPanel() {
         System.out.println("--- AccountCreationPopUpView.initPanel()");
@@ -70,6 +70,7 @@ public final class AccountCreationPopUpView extends AbstractView<AccountCreation
         this.browseButton.addActionListener(this.getController().new AvatarBrowseListener());
         this.cancelButton.addActionListener(this.getController().new CancelListener());
         this.createUserButton.addActionListener(this.getController().new CreateNewUserListener());
+        this.resetButton.addActionListener(this.getController().new ResetListener());
         this.avatarField.setEditable(false);
 
         GroupLayout layout = new GroupLayout(this.getPanel());
@@ -162,76 +163,152 @@ public final class AccountCreationPopUpView extends AbstractView<AccountCreation
         );
     }
 
+    /**
+     * Returns the type of the PopUp
+     * The type of the PopUp refers to its location in the screen
+     * @return type
+     */
     @Override
     public String getType() {
         return type;
     }
 
+    /**
+     * Updates the view
+     * @param obj
+     * @param str
+     */
     @Override
     public void update(Observable obj, String str) {
-        System.out.println("----- AccountCreationPopUp.update()");
+        System.out.println("----- AccountCreationPopUp.update() -> " + str);
     }
 
+    /**
+     * Returns the login of the user
+     * @return JTextField loginField
+     */
     public JTextField getLoginField() {
         return loginField;
     }
 
+    /**
+     * Updates the login of the user
+     * @param loginField
+     *                  The new Login
+     */
     public void setLoginField(JTextField loginField) {
         this.loginField = loginField;
     }
 
+    /**
+     * Returns the birth date of the user
+     * @return birthdateField
+     */
     public JTextField getBirthdateField() {
         return birthdateField;
     }
 
+    /**
+     * Updates the birth date of the user
+     * @param birthdateField
+     *                      The new birth date
+     */
     public void setBirthdateField(JTextField birthdateField) {
         this.birthdateField = birthdateField;
     }
 
+    /**
+     * Returns the password
+     * @return JTextField passwordField
+     */
     public JTextField getPasswordField() {
         return passwordField;
     }
 
+    /**
+     * Updates the password
+     * @param passwordField
+     */
     public void setPasswordField(JTextField passwordField) {
         this.passwordField = passwordField;
     }
 
+    /**
+     * Returns the confirmation of the password
+     * @return JTextField confirmField
+     */
     public JTextField getConfirmField() {
         return confirmField;
     }
 
+    /**
+     * Updates the confirmation of the password
+     * @param confirmField
+     */
     public void setConfirmField(JTextField confirmField) {
         this.confirmField = confirmField;
     }
 
+    /**
+     * Returns the first name of the user
+     * @return JTextField firstnameField
+     */
     public JTextField getFirstnameField() {
         return firstnameField;
     }
 
+    /**
+     * Updates the first name of the user
+     * @param firstnameField
+     */
     public void setFirstnameField(JTextField firstnameField) {
         this.firstnameField = firstnameField;
     }
 
+    /**
+     * Returns the last name of the user
+     * @return JTextField lastnameField
+     */
     public JTextField getLastnameField() {
         return lastnameField;
     }
 
+    /**
+     * Updates the last name of the user
+     * @param lastnameField
+     */
     public void setLastnameField(JTextField lastnameField) {
         this.lastnameField = lastnameField;
     }
 
+    /**
+     * Returns the path of the avatar
+     * @return JTextField avatarField
+     */
     public JTextField getAvatarField() {
         return avatarField;
     }
 
+    /**
+     * Updates the path of the avatar
+     * @param avatarField
+     */
     public void setAvatarField(JTextField avatarField) {
         this.avatarField = avatarField;
     }
 
+    /**
+     * Returns a list of the Compulsory fields
+     * @return ArratList listCompulsoryFields
+     */
     public ArrayList<JTextField> getListCompulsoryFields() {
         return listCompulsoryFields;
     }
 
+    /**
+     * Updates a list of compulsory fields
+     * @param listCompulsoryFields
+     */
     public void setListCompulsoryFields(ArrayList<JTextField> listCompulsoryFields) {
         this.listCompulsoryFields = listCompulsoryFields;
     }

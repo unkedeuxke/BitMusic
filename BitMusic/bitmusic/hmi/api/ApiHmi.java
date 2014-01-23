@@ -21,15 +21,14 @@ import java.util.ArrayList;
 public interface ApiHmi {
 
     /**
-    * Notify a new user connection to HMI
+    * Notifies a new user connection to HMI
     *
     * @param lightUserLan   The light user profile
-    * @return void
     */
     void notifyNewConnection(User lightUserLan);
 
     /**
-    * Remove user from the online-users-frame of others users still online
+    * Removes user from the online-users-frame of others users still online
     *
     * @param userId
     * @return void
@@ -45,15 +44,9 @@ public interface ApiHmi {
     */
     void notifyLightProfile(User user, String searchId);
 
-    /**
-    * Receive the songlist from a user
-    * Print all the music of one user
-    *
-    * @param userId	String of the user ID
-    * @param songList	Song library containing songs
-    * @return void
-    */
-    void notifySongListByUserId(String userId, SongLibrary songList);
+    //NE DOIT PAS ETRE UTILISEE, JE NE SAIS PAS D'OU SORT CETTE METHODE
+    //UTILISER notifySongListBySearchId !!
+//    void notifySongListByUserId(String userId, SongLibrary songList);
 
     /**
     * Notify the HMI about the reception of a song list
@@ -74,21 +67,124 @@ public interface ApiHmi {
     void updateCommentNotification(Song song, String comment);
 
     // TODO : vérifier leur utilité pour les autres modules
-    void displayCategories();
+
+    /**
+     *
+     */
+        void displayCategories();
+
+    /**
+     *
+     * @param name
+     * @param play
+     * @param readInfos
+     * @param comment
+     * @param rate
+     */
     void addCategory(String name, boolean play, Rights readInfos, boolean comment, boolean rate);
+
+    /**
+     *
+     */
     void removeCategory();
+
+    /**
+     *
+     * @param userId
+     */
     void searchSongsByUser(String userId);
+
+    /**
+     *
+     * @param userID
+     */
     void displayUser(String userID);
+
+    /**
+     *
+     * @param path
+     * @param title
+     * @param artist
+     * @param album
+     * @param tags
+     * @param rights
+     */
     void importSong(String path, String title, String artist, String album, ArrayList<String> tags, Rights rights);
+
+    /**
+     *
+     * @param song
+     * @param comment
+     * @return
+     */
     boolean addComment(Song song, String comment);
+
+    /**
+     *
+     * @param user
+     * @param category
+     */
     void addUserToCategory(User user, Category category);
+
+    /**
+     *
+     */
     void logOut();
+
+    /**
+     *
+     */
     void closeApp();
+
+    /**
+     *
+     */
     void playRemoteSong();
+
+    /**
+     *
+     * @param user
+     * @param category
+     */
     void removeUserFromCategory(User user, Category category);
+
+    /**
+     *
+     * @param songId
+     * @param rights
+     */
     void manageRightsForOneSong(String songId, Rights rights);
+
+    /**
+     *
+     * @param player
+     */
     void startSong(SongPlayer player);
+
+    /**
+     *
+     * @param login
+     * @param mdp
+     */
     void connectUser(String login, String mdp);
+
+    /**
+     *
+     * @param userId
+     */
     void displaySongs(String userId);
-    void errorNotification(String errorMessage);
+
+    /**
+     *
+     * @param moduleName
+     * @param errorMessage
+     */
+    void errorNotification(String moduleName, String errorMessage);
+
+    /**
+     * Updates the rates of a song in the network
+     * @param song
+     * @param userId
+     */
+    void updateRate(Song song, String userId);
 }

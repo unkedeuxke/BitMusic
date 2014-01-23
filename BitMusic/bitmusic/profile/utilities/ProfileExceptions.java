@@ -16,12 +16,20 @@ public class ProfileExceptions extends Throwable {
     public ProfileExceptions(ProfileExceptionType type) {
         this.type = type;
         switch(type) {
-            case LoginNull : {
+            case LoginNullOrEmpty : {
                 this.errorMessage = "No login defined";
                 break;
             }
-            case PasswordNull : {
+            case PasswordNullOrEmpty : {
                 this.errorMessage = "No password defined";
+                break;
+            }
+            case BirthDateNull : {
+                this.errorMessage = "No birthdate given";
+                break;
+            }
+            case PathNullorEmpty : {
+                this.errorMessage = "No path given";
                 break;
             }
             case LoginWithInvalidCharacters : {
@@ -32,8 +40,48 @@ public class ProfileExceptions extends Throwable {
                 this.errorMessage = "Category not found";
                 break;
             }
+            case CategoryEmptyName : {
+                this.errorMessage = "Category's name empty";
+                break;
+            }
+            case LoginEmptyName : {
+                this.errorMessage = "Login is empty";
+                break;
+            }
+            case UserIdEmptyName : {
+                this.errorMessage = "UserId is empty";
+                break;
+            }
+            case PasswordEmptyName : {
+                this.errorMessage = "Password is empty";
+                break;
+            }
             case ConnectionWrongLogin : {
                 this.errorMessage = "Can\'t connect : wrong login entered";
+                break;
+            }
+            case BirthdateEmptyName : {
+                this.errorMessage = "Birthday is empty";
+                break;
+            }
+            case FirstNameNullOrEmpty : {
+                this.errorMessage = "Firstname is empty";
+                break;
+            }
+            case LastNameNullOrEmpty : {
+                this.errorMessage = "Lastname is empty";
+                break;
+            }
+            case AvatarPathEmpty : {
+                this.errorMessage = "AvatarPath is empty";
+                break;
+            }
+            case CatNameNullOrEmpty : {
+                this.errorMessage = "Category name is empty";
+                break;
+            }
+            case SongEmptyName : {
+                this.errorMessage = "SongId is empty";
                 break;
             }
             case ConnectionWrongPassword : {
@@ -44,8 +92,48 @@ public class ProfileExceptions extends Throwable {
                 this.errorMessage = "Can\'t open file";
                 break;
             }
+            case FileNotAuthorized : {
+                this.errorMessage = "File not authorized";
+                break;
+            }
+            case CreationFileError : {
+                this.errorMessage = "Can\'t create file";
+                break;
+            }
+            case WritingFileError : {
+                this.errorMessage = "Can\'t write in file";
+                break;
+            }
+            case ExistingFileError : {
+                this.errorMessage = "File already exists";
+                break;
+            }
+            case ReadingFileError : {
+                this.errorMessage = "Can\'t read file";
+                break;
+            }
+            case FindingClassUserError : {
+                this.errorMessage = "Finding class user error";
+                break;
+            }
             case DirNotFound: {
                 this.errorMessage = "Dir not found";
+                break;
+            }
+            case UserNull: {
+                this.errorMessage = "User null";
+                break;
+            }
+            case EmptyString: {
+                this.errorMessage = "Empty string received";
+                break;
+            }
+            case SongNull: {
+                this.errorMessage = "Song null";
+                break;
+            }
+            case RightNull: {
+                this.errorMessage = "Right null";
                 break;
             }
             default : {

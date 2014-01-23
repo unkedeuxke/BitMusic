@@ -17,14 +17,13 @@ import bitmusic.hmi.modules.myprofile.MyProfileComponent;
 import bitmusic.hmi.modules.onlineusers.OnlineUsersComponent;
 import bitmusic.hmi.modules.playbar.PlayBarComponent;
 import bitmusic.hmi.modules.searchbar.SearchBarComponent;
-import bitmusic.hmi.modules.tab.TabComponent;
 import bitmusic.network.exception.NetworkException;
-import bitmusic.profile.classes.User;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  *
- * @author hebergui, unkedeuxke
+ * @author IHM
  */
 public class WindowComponent {
 
@@ -32,10 +31,10 @@ public class WindowComponent {
     private WindowView view;
     private WindowController controller;
 
-    private ApiHmiImpl apiHmi;
-    private ApiProfileImpl apiProfile;
-    private ApiMusicImpl apiMusic;
-    private bitmusic.network.main.ApiHmiImpl apiNetwork;
+    private ApiHmiImpl apiHmi = null;
+    private ApiProfileImpl apiProfile = null;
+    private ApiMusicImpl apiMusic = null;
+    private bitmusic.network.main.ApiHmiImpl apiNetwork = null;
 
     private CategoriesComponent categoriesComponent;
     private ConnectionComponent connectionComponent;
@@ -49,7 +48,7 @@ public class WindowComponent {
         this.apiHmi = new ApiHmiImpl();
         this.apiProfile = ApiProfileImpl.getApiProfile();
         this.apiMusic = ApiMusicImpl.getInstance();
-        this.apiNetwork = Controller.getInstance().getApiHmi();
+
 
         this.model = new WindowModel();
         this.view = new WindowView();
@@ -63,17 +62,38 @@ public class WindowComponent {
         this.view.addView(this.getConnectionComponent().getView());
     }
 
-    /** Holder */
+    /**
+     * Notifies the network that the connection is established
+     */
+    public void startNetwork() {
+        this.apiNetwork = Controller.getInstance().getApiHmi();
+        //On notifie le réseau que l'on s'est connecté
+        this.apiNetwork.notifyNewConnection(apiProfile.getCurrentUser());
+    }
+
+    /**
+     * Holder
+     */
     private static class WindowComponentHolder {
-        /** Instance unique non préinitialisée */
+        /**
+         * Unique instance none pre-initialized
+         */
         private final static WindowComponent instance = new WindowComponent();
     }
 
-    /** Point d'accès pour l'instance unique du singleton */
+    /**
+     * Access point to the single instance of the singleton
+     * @return instance
+     */
     public static WindowComponent getInstance() {
             return WindowComponentHolder.instance;
     }
 
+    /**
+     * Initializes all the window components
+     * Creates all the components
+     * Gets a list of online users to display it in the OnlineUsersComponent
+     */
     public void initAllComponents() {
         // Création des différents Components
         WindowComponent win = WindowComponent.getInstance();
@@ -89,124 +109,227 @@ public class WindowComponent {
         // this.getWindowView().addView(this.getCategoriesComponent().getView());
 
         this.setCentralAreaComponent(new CentralAreaComponent());
-        this.getCentralAreaComponent().getView().addTab(new TabComponent().getView());
         this.getWindowView().addView(this.getCentralAreaComponent().getView());
+        //On affiche mesMorceaux dans une tab dans centralArea
+        this.myProfileComponent.getController().new MySongsListener().actionPerformed(null);
+
+        this.setPlayBarComponent(new PlayBarComponent());
+        this.getWindowView().addView(this.getPlayBarComponent().getView());
 
         this.setOnlineUsersComponent(new OnlineUsersComponent());
         this.getWindowView().addView(this.getOnlineUsersComponent().getView());
 
+        // Récupération de la liste des utilisateurs déjà connectés pour les afficher dans OnlineUsersComponent
         String ourUserId = win.getApiProfile().getCurrentUser().getUserId();
-        List<String> currentOnlineUsersId = win.getApiNetwork().getAllUserId();
+        //List<String> currentOnlineUsersId = win.getApiNetwork().getAllUserId();
+        List<String> currentOnlineUsersId = new ArrayList();
         for (int i = 0; i < currentOnlineUsersId.size(); i++) {
             try {
-                win.getApiNetwork().getUser(ourUserId, currentOnlineUsersId.get(i), null); // searchId nécessaire ?
+                win.getApiNetwork().getUser(ourUserId, currentOnlineUsersId.get(i), null); // searchId nécessaire ici ?
             } catch (NetworkException e) {
                 System.out.println("Erreur à l'appel de la méthode ApiNetwork.getUser() !");
             }
         }
-        // NB : Pas besoin de prévenir Network qu'on s'est connecté, Profile le fait lors de l'appel à doConnection()
-        // => on est censé recevoir un notifyNewConnection() de Network pour notre propre connection
-
-        this.setPlayBarComponent(new PlayBarComponent());
-        this.getWindowView().addView(this.getPlayBarComponent().getView());
+        // Pas besoin de prévenir Network qu'on s'est connecté, Profile le fait via notre appel à checkPassword() dans doConnection()
+        // On est censé recevoir un notifyNewConnection() de Network pour notre propre connection
     }
 
+    /**
+     *
+     * @return model
+     */
     public WindowModel getWindowModel() {
         return this.model;
     }
 
+    /**
+     *
+     * @return view
+     */
     public WindowView getWindowView() {
         return this.view;
     }
 
+    /**
+     *
+     * @return controller
+     */
     public WindowController getWindowController() {
         return this.controller;
     }
 
+    /**
+     *
+     * @return apiHmi
+     */
     public ApiHmiImpl getApiHmi() {
         return this.apiHmi;
     }
 
+    /**
+     *
+     * @param apiHmi
+     */
     public void setApiHmi(ApiHmiImpl apiHmi) {
         this.apiHmi = apiHmi;
     }
 
+    /**
+     *
+     * @return apiProfile
+     */
     public ApiProfileImpl getApiProfile() {
         return this.apiProfile;
     }
 
+    /**
+     *
+     * @param apiProfile
+     */
     public void setApiProfile(ApiProfileImpl apiProfile) {
         this.apiProfile = apiProfile;
     }
 
+    /**
+     *
+     * @return apiMusic
+     */
     public ApiMusicImpl getApiMusic() {
         return this.apiMusic;
     }
 
+    /**
+     *
+     * @param apiMusic
+     */
     public void setApiMusic(ApiMusicImpl apiMusic) {
         this.apiMusic = apiMusic;
     }
 
+    /**
+     *
+     * @return apiNetwork
+     */
     public bitmusic.network.main.ApiHmiImpl getApiNetwork() {
         return this.apiNetwork;
     }
 
+    /**
+     *
+     * @param apiNetwork
+     */
     public void setApiNetwork(bitmusic.network.main.ApiHmiImpl apiNetwork) {
         this.apiNetwork = apiNetwork;
     }
 
+    /**
+     *
+     * @return categoriesComponent
+     */
     public CategoriesComponent getCategoriesComponent() {
         return this.categoriesComponent;
     }
 
+    /**
+     *
+     * @param categoriesComponent
+     */
     public void setCategoriesComponent(CategoriesComponent categoriesComponent) {
         this.categoriesComponent = categoriesComponent;
     }
 
+    /**
+     *
+     * @return connectionComponent
+     */
     public ConnectionComponent getConnectionComponent() {
         return this.connectionComponent;
     }
 
+    /**
+     *
+     * @param connectionComponent
+     */
     public void setConnectionComponent(ConnectionComponent connectionComponent) {
         this.connectionComponent = connectionComponent;
     }
 
+    /**
+     *
+     * @return myProfileComponent
+     */
     public MyProfileComponent getMyProfileComponent() {
         return this.myProfileComponent;
     }
 
+    /**
+     *
+     * @param myProfileComponent
+     */
     public void setMyProfileComponent(MyProfileComponent myProfileComponent) {
         this.myProfileComponent = myProfileComponent;
     }
 
+    /**
+     *
+     * @return onlineUsersComponent
+     */
     public OnlineUsersComponent getOnlineUsersComponent() {
         return this.onlineUsersComponent;
     }
 
+    /**
+     *
+     * @param onlineUsersComponent
+     */
     public void setOnlineUsersComponent(OnlineUsersComponent onlineUsersComponent) {
         this.onlineUsersComponent = onlineUsersComponent;
     }
 
+    /**
+     *
+     * @return playBarComponent
+     */
     public PlayBarComponent getPlayBarComponent() {
         return this.playBarComponent;
     }
 
+    /**
+     *
+     * @param playBarComponent
+     */
     public void setPlayBarComponent(PlayBarComponent playBarComponent) {
         this.playBarComponent = playBarComponent;
     }
 
+    /**
+     *
+     * @return searchBarComponent
+     */
     public SearchBarComponent getSearchBarComponent() {
         return this.searchBarComponent;
     }
 
+    /**
+     *
+     * @param searchBarComponent
+     */
     public void setSearchBarComponent(SearchBarComponent searchBarComponent) {
         this.searchBarComponent = searchBarComponent;
     }
 
+    /**
+     *
+     * @return centralAreaComponent
+     */
     public CentralAreaComponent getCentralAreaComponent() {
         return this.centralAreaComponent;
     }
 
+    /**
+     *
+     * @param centralAreaComponent
+     */
     public void setCentralAreaComponent(CentralAreaComponent centralAreaComponent) {
         this.centralAreaComponent = centralAreaComponent;
     }

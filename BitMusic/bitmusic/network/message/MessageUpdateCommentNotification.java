@@ -50,12 +50,12 @@ public final class MessageUpdateCommentNotification extends AbstractMessage {
     }
 
     /**
-     * .
+     * Method that implements the treatment of the message.
      */
     @Override
     public void treatment() {
-        //WindowComponent.getInstance().getApiHmi().updateCommentNotification(
-          //  this.song, this.comment);
+        WindowComponent.getInstance().getApiHmi().updateCommentNotification(
+            this.song, this.comment.getComment());
     }
 
     /**

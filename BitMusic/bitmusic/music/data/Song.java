@@ -1,8 +1,7 @@
 package bitmusic.music.data;
 
 import bitmusic.profile.api.ApiProfileImpl;
-import java.util.Date;
-import java.util.HashMap;
+import bitmusic.profile.utilities.ProfileExceptions;
 import java.util.*;
 import java.io.Serializable;
 
@@ -11,7 +10,7 @@ import java.io.Serializable;
  * @author Elthum
  */
 public class Song implements Serializable{
-    
+
     //################################################################//
     //########################## ATTRIBUTES ##########################//
     //################################################################//
@@ -20,56 +19,56 @@ public class Song implements Serializable{
      * References the sond id.
      */
     private String songId;
-    
+
     /**
      * References the title of the song.
      */
     private String title;
-    
+
     /**
      * References the artist of the song.
      */
     private String artist;
-    
+
     /**
      * References the album og the song.
      */
     private String album;
-    
+
     /**
      * References the list of tags.
      */
     private LinkedList<String> tags;
-    
+
     /**
      * References the song comments.
      */
     private LinkedList<Comment> comments;
-    
+
     /**
      * References the song grades.
      */
     private HashMap<String,Grade> grades;
-    
+
     /**
      * References the owner id.
      */
     private String ownerId;
-    
+
     /**
      * References the rights by category.
      */
     private HashMap<String,Rights> rightsByCategory;
-    
+
     /**
      * References the local rights
      */
     private Rights localRights;
-    
+
     //##################################################################//
     //######################### CONSTRUCTORS ###########################//
     //##################################################################//
-        
+
     /**
      * Basic constructor of a Song.
      * @param songId References the songId.
@@ -79,69 +78,50 @@ public class Song implements Serializable{
      * @param tags References the list of tag.
      * @param rightsByCategory References a map of rightsByCategory.
      */
-    public Song(String songId, String title, String artist, String album, LinkedList<String> tags, HashMap<String,Rights> rightsByCategory) 
+    public Song(String songId, String title, String artist,  String album,String ownerId, LinkedList<String> tags, HashMap<String,Rights> rightsByCategory)
     {
-       
+
         this.songId = songId;
         this.title = title;
+        this.ownerId=ownerId;
         this.album = album;
         this.artist = artist;
         this.tags = tags;
         this.rightsByCategory = rightsByCategory;
         this.localRights = new Rights(true, true, true, true);
-        
+
+        this.comments = new LinkedList();
+        this.grades = new HashMap();
+
+        System.out.println("New -- " + this.toString());
     }
-    
-     public Song(String songId, String title, String artist, String album, LinkedList<String> tags)
+
+     public Song(String songId, String title, String artist, String album,String ownerId, LinkedList<String> tags)
      {
-        
+
         this.songId = songId;
         this.title = title;
         this.album = album;
+        this.ownerId=ownerId;
         this.artist = artist;
         this.tags = tags;
         this.rightsByCategory= new HashMap<String,Rights>();
         this.localRights = new Rights(true, true, true, true);
-        
+
+        this.comments = new LinkedList();
+        this.grades = new HashMap();
+
+        System.out.println("New -- " + this.toString());
     }
+
+
+
     
-    
-    
-    
-    
-    
+
+
     //##################################################################//
     //########################### METHODS ##############################//
     //##################################################################//
-    
-    /**
-     * Get a lightSong with the localSong attribute for the user with userId
-     * @param authorId The authorId
-     * @return A light song with attribute modified for the autorId.
-     * @deprecated En théorie ne doit plus être utilise.
-     */
-    public Song getLightSong(String userId) {
-        Song lightSong = new Song( songId, title, artist, album, tags, rightsByCategory);
-        ArrayList<String> categoryList = ApiProfileImpl.getApiProfile().getCategoriesNameByUserId(userId);
-        Rights localRights = new Rights(true, true, true, true);
-        
-        for (String categoryName :  categoryList) {
-            Rights r = rightsByCategory.get(categoryName);
-            if (!r.getcanComment())
-                r.setcanComment(false);
-            if (!r.getcanPlay())
-                r.setcanPlay(false);
-            if (!r.getcanRate())
-                r.setcanRate(false);
-            if (!r.getcanReadInfo())
-                r.setcanReadInfo(false);
-        }
-        
-        lightSong.rightsByCategory = null;
-        
-        return lightSong;
-    }
-    
     /**
      * Add or replace a comment on a song.
      * @param comment The comment to add.
@@ -149,7 +129,7 @@ public class Song implements Serializable{
     public void addComment(Comment comment) {
         comments.add(comment);
     }
-    
+
     /**
      * Delete a comment from a song.
      * @param authorId The author of the song.
@@ -162,7 +142,7 @@ public class Song implements Serializable{
             }
         }
     }
-    
+
     /**
      * Add or replace a grade to the song.
      * @param grade The grade to add or replace.
@@ -170,7 +150,7 @@ public class Song implements Serializable{
     public void addGrade(Grade grade) {
         grades.put(grade.getAuthorId(), grade);
     }
-    
+
     /**
      * Delete a grade from a song.
      * @param authorId The author of the grade.
@@ -178,16 +158,16 @@ public class Song implements Serializable{
     public void deleteGrade(String authorId) {
         grades.remove(authorId);
     }
-    
+
     /**
      * Add or update the right of a category
      * @param categoryName The category's name to update or add.
      * @param rights The rights to associate to the category.
      */
-    public void updateCategory(String categoryName, Rights rights) { 
+    public void updateCategory(String categoryName, Rights rights) {
         this.rightsByCategory.put(categoryName, rights);
     }
-    
+
     /**
      * Delete a category with its rights in a song?
      * @param categoryName The category to delete.
@@ -195,11 +175,11 @@ public class Song implements Serializable{
     public void deleteCategory(String categoryName) {
         this.rightsByCategory.remove(categoryName);
     }
-    
+
     //##################################################################//
     //####################### GETTER & SETTER ##########################//
     //##################################################################//
-   
+
     /**
      * Getter of the attribute songId.
      * @return The song id.
@@ -280,13 +260,12 @@ public class Song implements Serializable{
     public Rights getLocalRights() {
         return localRights;
     }
-    
+
     public HashMap<String,Rights> getRightsByCategory() {
         return rightsByCategory;
     }
 
     public boolean hasTag(List<String> tagList){
-        
         Iterator<String> it = tagList.iterator();
         while(it.hasNext()){
             String currentTag = it.next();
@@ -295,5 +274,29 @@ public class Song implements Serializable{
             }
         }
         return false;
+    }
+
+    /**
+     * toString function (variables : commentText, authorId and commentDate).
+     * @return string of variables
+     */
+    @Override public final String toString() {
+ /* @param songId References the songId.
+     * @param title References the title.
+     * @param artist References the artist.
+     * @param album References the album.
+     * @param tags References the list of tag.
+     * @param rightsByCategory References a map of rightsByCategory.*/
+        String s = "Song -- songId : " + songId + " ; title : " + title + " ; artist : " + artist +" ; album : " + album;
+        s += "\nOwner : "+ownerId;
+        s += "\n  Tags :";
+        for (String tag : tags)
+            s += " " + tag;
+        s += "\n  Rights : To Do";
+        s += "\n  Grades : To Do";
+        s += "\n  Comments :";
+        for (Comment comment : comments)
+            s += "\n    " + comment.toString();
+        return s;
     }
 }

@@ -8,19 +8,30 @@ package bitmusic.hmi.modules.connection;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractModel;
+import bitmusic.profile.utilities.ProfileExceptions;
 
 /**
  *
- * @author hebergui, unkedeuxke
+ * @author IHM
  */
 public final class ConnectionModel extends AbstractModel {
 
+    /**
+     * Constructor of ConnectionModel
+     */
     public ConnectionModel() {
         super();
     }
 
-    public boolean doConnection(String login, String password) {
-        //return WindowComponent.getInstance().getApiProfile().checkPassword(login, password); // TODO : en attente de la disponibilité de la méthode dans l'API
-        return true; // TODO : à virer
+    /**
+     *
+     * @param login
+     * @param password
+     * @return
+     * @throws ProfileExceptions
+     */
+    public boolean doConnection(String login, String password) throws ProfileExceptions {
+        //return true;
+        return WindowComponent.getInstance().getApiProfile().checkPassword(login, password);
     }
 }

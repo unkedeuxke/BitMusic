@@ -6,20 +6,20 @@
 
 package bitmusic.hmi.modules.connection;
 
+import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractView;
 import bitmusic.hmi.patterns.Observable;
-import java.awt.Dimension;
 import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.GroupLayout;
-import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 /**
- *
- * @author hebergui, unkedeuxke
+ * View class of the connection window
+ * @author IHM
  */
 public final class ConnectionView extends AbstractView<ConnectionController> {
 
@@ -33,17 +33,28 @@ public final class ConnectionView extends AbstractView<ConnectionController> {
     private JTextField loginField = new JTextField("");
     private JPasswordField passwordField = new JPasswordField("");
 
-    private ArrayList<JTextField> listCompulsoryFields = new ArrayList<>();
+    private ArrayList<JTextField> listCompulsoryFields = new ArrayList();
 
+    /**
+     * Constructor of ConnectionView
+     */
     public ConnectionView() {
         super();
     }
 
+    /**
+     * Returns the type of the window
+     * The type of the window refers to its location in the screen
+     * @return type
+     */
     @Override
     public String getType(){
         return type;
     }
 
+    /**
+     * Initializes the view
+     */
     @Override
     public void initPanel() {
         System.out.println("--- ConnectionView.initPanel()");
@@ -54,6 +65,7 @@ public final class ConnectionView extends AbstractView<ConnectionController> {
         this.resetButton.addActionListener(this.getController().new ResetListener());
         this.connectButton.addActionListener(this.getController().new ConnectionListener());
         this.createUserButton.addActionListener(this.getController().new CreateNewUserListener());
+        this.passwordField.addKeyListener(this.getController().new EnterKeyListener());
 
         GroupLayout layout = new GroupLayout(this.getPanel());
         this.getPanel().setLayout(layout);
@@ -103,53 +115,97 @@ public final class ConnectionView extends AbstractView<ConnectionController> {
                     .addComponent(createUserButton))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
+
     }
 
+    /**
+     * Returns the title of the window
+     * @return connectionLabel
+     */
     public JLabel getConnectionLabel() {
         return this.connectionLabel;
     }
 
+    /**
+     * Returns the login
+     * @return loginLabel
+     */
     public JLabel getLoginLabel() {
         return this.loginLabel;
     }
 
+    /**
+     * Returns the password
+     * @return passwordLabel
+     */
     public JLabel getPasswordLabel() {
         return this.passwordLabel;
     }
 
+    /**
+     *
+     * @return connectButton
+     */
     public JButton getConnectButton() {
         return this.connectButton;
     }
 
+    /**
+     *
+     * @return resetButton
+     */
     public JButton getResetButton() {
         return this.resetButton;
     }
 
+    /**
+     *
+     * @return createUserButton
+     */
     public JButton getCreateUserButton() {
         return this.createUserButton;
     }
 
+    /**
+     *
+     * @return loginField
+     */
     public JTextField getLoginField() {
         return this.loginField;
     }
 
+    /**
+     *
+     * @return passwordField
+     */
     public JPasswordField getPasswordField() {
         return this.passwordField;
     }
 
+    /**
+     * Updates the view
+     * @param obj
+     * @param str
+     */
     @Override
     public void update(Observable obj, String str) {
-        System.out.println("----- ConnectionView.update()");
+        System.out.println("----- ConnectionView.update() -> " + str);
     }
 
+    /**
+     *
+     * @return ArrayList listCompulsoryFields
+     */
     public ArrayList<JTextField> getListCompulsoryFields() {
         return listCompulsoryFields;
     }
 
+    /**
+     *
+     * @param listCompulsoryFields
+     */
     public void setListCompulsoryFields(ArrayList<JTextField> listCompulsoryFields) {
         this.listCompulsoryFields = listCompulsoryFields;
     }
-
-
 
 }

@@ -6,7 +6,10 @@
 
 package bitmusic.network.message;
 
+import bitmusic.hmi.mainwindow.WindowComponent;
+import bitmusic.music.api.ApiMusicImpl;
 import bitmusic.network.main.Controller;
+import bitmusic.profile.api.ApiProfileImpl;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -56,8 +59,8 @@ public final class MessageGetSongFile extends AbstractMessage {
      */
     @Override
     public void treatment() {
-        //String path = ApiProfileImpl.getApiProfile().getSongFile(this.userId, this.songId);
-        final String pathFile = null;
+        final String pathFile = ApiMusicImpl.getInstance().
+                getSongFile(this.songId);
         final Path path = Paths.get(pathFile);
         try {
            final byte[] mp3Array = Files.readAllBytes(path);
@@ -70,7 +73,7 @@ public final class MessageGetSongFile extends AbstractMessage {
                     //ipDest
                     this.ipSource,
                     //user id mp3 owner
-                    this.userId,
+                    ApiProfileImpl.getApiProfile().getCurrentUser().getUserId(),
                     //song id
                     this.songId,
                     //temporary file
@@ -81,7 +84,8 @@ public final class MessageGetSongFile extends AbstractMessage {
             Controller.getInstance().getThreadManager().
                     assignTaskToHermes(message);
         } catch (IOException e) {
-
+            WindowComponent.getInstance().getApiHmi()
+                    .errorNotification("Network", e.getMessage());
         }
     }
 

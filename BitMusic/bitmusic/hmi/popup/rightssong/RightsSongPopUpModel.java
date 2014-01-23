@@ -9,11 +9,14 @@ package bitmusic.hmi.popup.rightssong;
 import bitmusic.hmi.patterns.AbstractModel;
 
 /**
- *
- * @author unkedeuxke
+ * Model class of RightsSongPopUp
+ * @author IHM
  */
 public final class RightsSongPopUpModel extends AbstractModel {
 
+    /**
+     * Constructor of RightsSongPopUpModel
+     */
     public RightsSongPopUpModel() {
         super();
     }

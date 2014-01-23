@@ -10,10 +10,13 @@ import bitmusic.hmi.patterns.AbstractComponent;
 
 /**
  *
- * @author unkedeuxke
+ * @author IHM
  */
 public final class PlayBarComponent extends AbstractComponent<PlayBarModel, PlayBarView, PlayBarController> {
 
+    /**
+     * Constructor of PlayBarComponent
+     */
     public PlayBarComponent() {
         this.model = new PlayBarModel();
         this.view = new PlayBarView();

@@ -6,6 +6,7 @@
 
 package bitmusic.network.main;
 
+import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.network.message.AbstractMessage;
 import bitmusic.network.message.EnumTypeMessage;
 import java.io.ByteArrayOutputStream;
@@ -20,23 +21,25 @@ import java.net.Socket;
  * Threads that only SEND messages are called Hermes.
  * @author Pak
  */
-public class Hermes extends AbstractManageable {
+public final class Hermes extends AbstractManageable {
     /**
      * The message that hermes has to send.
      */
-    private final AbstractMessage message;
+    private final transient AbstractMessage message;
+    private final transient int UDP_SENDING_PORT=4445;
 
     /**
      * Create a new instance of Hermes messenger.
      * @param paramMessage The message that has to be sent
      */
-    public Hermes(AbstractMessage paramMessage) {
+    public Hermes(final AbstractMessage paramMessage) {
+        super();
         message = paramMessage;
     }
 
     /**
-     * .
-     * @return
+     * Getter for the message attribute.
+     * @return The message saved in Hermes
      */
     public AbstractMessage getMessage() {
         return message;
@@ -56,11 +59,14 @@ public class Hermes extends AbstractManageable {
         }
     }
 
-    private final void sendTcpMessage() {
+    /**
+     * Method used to send a message using TCP protocol on the network.
+     */
+    private void sendTcpMessage() {
         try {
             final Socket socket = new Socket(message.getIpDest(),
             Controller.getInstance().
-            getNetworkListener().getPORTLISTENED());
+            getTCPNetworkListener().getPortListened());
 
             final ObjectOutputStream oos = new ObjectOutputStream(
             socket.getOutputStream());
@@ -68,38 +74,41 @@ public class Hermes extends AbstractManageable {
             oos.writeObject(message);
 
             oos.flush();
-
+            
+            socket.close();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            WindowComponent.getInstance().getApiHmi()
+                    .errorNotification("Network", e.getMessage());
         }
     }
 
-    private final void sendUdpMessage() {
+    /**
+     * Method used to send a message using UDP protocol on the network.
+     */
+    private void sendUdpMessage() {
         try {
-            final DatagramSocket socket = new DatagramSocket(
-                    Controller.getInstance().getNetworkListener().
-                            getPORTLISTENED(), InetAddress.getLocalHost());
+            final DatagramSocket socket = new DatagramSocket(UDP_SENDING_PORT , InetAddress.getLocalHost());
+            final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
+            final ObjectOutputStream oos = new ObjectOutputStream(baos);
 
             oos.writeObject(this.message);
 
-            byte[] data = baos.toByteArray();
+            final byte[] data = baos.toByteArray();
 
-            DatagramPacket packet = new DatagramPacket(data, data.length,
+            final DatagramPacket packet = new DatagramPacket(data, data.length,
                     InetAddress.getByName(Controller.getBroadcastAddress()),
-                    Controller.getInstance().getNetworkListener().
-                            getPORTLISTENED());
-
+                    UDP_SENDING_PORT);
             socket.send(packet);
 
             oos.writeObject(message);
 
             oos.flush();
+
+            socket.close();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            WindowComponent.getInstance().getApiHmi()
+                    .errorNotification("Network", e.getMessage());
         }
     }
 }

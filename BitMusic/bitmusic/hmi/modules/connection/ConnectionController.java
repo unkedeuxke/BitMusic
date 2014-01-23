@@ -9,34 +9,55 @@ package bitmusic.hmi.modules.connection;
 import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractController;
 import bitmusic.hmi.popup.accountcreation.AccountCreationPopUpComponent;
-import bitmusic.hmi.popup.importsong.ImportSongPopUpController;
+import bitmusic.profile.classes.User;
+import bitmusic.profile.utilities.ProfileExceptions;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 /**
- *
- * @author hebergui, unkedeuxke
+ * Controller class of connection
+ * @author IHM
  */
 public final class ConnectionController extends AbstractController<ConnectionModel, ConnectionView> {
 
     private JDialog popUp;
 
+    /**
+     * Constructor of ConnectionController
+     * @param model
+     * @param view
+     */
     public ConnectionController(final ConnectionModel model, final ConnectionView view) {
         super(model, view);
     }
 
+    /**
+     * Returns a pop up
+     * @return popUp
+     */
     public JDialog getPopUp() {
         return this.popUp;
     }
 
+    /**
+     * Updates a pop up
+     * @param popUp
+     */
     public void setPopUp(JDialog popUp) {
         this.popUp = popUp;
     }
 
+    /**
+     * Listener of connection button
+     */
     public class ConnectionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -51,14 +72,33 @@ public final class ConnectionController extends AbstractController<ConnectionMod
                         "Tous les champs obligatoires doivent être renseignés !",
                         "Attention aux champs",
                         JOptionPane.WARNING_MESSAGE);
+                return;
             }
-            else if (model.doConnection(view.getLoginField().getText(), view.getPasswordField().getText()) == true) {
+
+            Boolean isRightPass = false;
+
+            try {
+                isRightPass = model.doConnection(view.getLoginField().getText(), view.getPasswordField().getText());
+            } catch (ProfileExceptions ex) {
+                Logger.getLogger(ConnectionController.class.getName()).log(Level.SEVERE, null, ex);
+                //TODO : à supprimer quand Profile aura supprimé son exception !
+                JOptionPane.showMessageDialog(
+                        view,
+                        "Erreur de vérification du mot de passe",
+                        "Erreur de profile",
+                        JOptionPane.WARNING_MESSAGE);
+            }
+
+
+            if ( isRightPass ) {
                 WindowComponent win = WindowComponent.getInstance();
                 // On enlève la ConnectionView des "objets utilisés"
                 win.getWindowView().removeView(view);
 
                 //On initialise tous les composants dans la vue principale
                 win.initAllComponents();
+                //On démarre le network
+                win.startNetwork();
             }
             else {
                 JOptionPane.showMessageDialog(
@@ -67,11 +107,42 @@ public final class ConnectionController extends AbstractController<ConnectionMod
                         "Connexion refusée",
                         JOptionPane.ERROR_MESSAGE);
             }
-
-
         }
     }
+    /**
+     * Listener on enterkey button
+     */
+    public class EnterKeyListener implements KeyListener {
+        /**
+         * if the enterkey button is typed
+         * @param ke
+         */
+        @Override
+        public void keyTyped(KeyEvent ke) {}
 
+        /**
+         * if the enterkey button is pressed
+         * @param ke
+         */
+        @Override
+        public void keyPressed(KeyEvent ke) {
+            if (ke.getKeyCode()==KeyEvent.VK_ENTER){
+                ConnectionController.this.new ConnectionListener().actionPerformed(null);
+            }
+        }
+
+        /**
+         * if the enterkey is released
+         * @param ke
+         */
+        @Override
+        public void keyReleased(KeyEvent ke) {}
+
+    }
+
+    /**
+     * Listener on reset button
+     */
     public class ResetListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -83,6 +154,9 @@ public final class ConnectionController extends AbstractController<ConnectionMod
         }
     }
 
+    /**
+     * Listener on create user button
+     */
     public class CreateNewUserListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -99,6 +173,10 @@ public final class ConnectionController extends AbstractController<ConnectionMod
         }
     }
 
+    /**
+     * Checks all the compulsory fields
+     * @return
+     */
     public boolean checkAllCompulsoryFields() {
         ArrayList<JTextField> listCompulsoryFields = this.getView().getListCompulsoryFields();
 

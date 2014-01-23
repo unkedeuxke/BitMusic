@@ -9,11 +9,14 @@ package bitmusic.hmi.popup.modifyprofile;
 import bitmusic.hmi.patterns.AbstractModel;
 
 /**
- *
- * @author unkedeuxke
+ * Model class of ModifyProfilePopUp
+ * @author IHM
  */
 public final class ModifyProfilePopUpModel extends AbstractModel {
 
+    /**
+     * Constructor of ModifyProfilePopUpModel
+     */
     public ModifyProfilePopUpModel() {
         super();
     }

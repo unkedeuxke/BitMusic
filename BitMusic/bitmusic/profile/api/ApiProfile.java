@@ -4,24 +4,30 @@
  */
 package bitmusic.profile.api;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+
 import bitmusic.music.data.Rights;
 import bitmusic.music.data.Song;
 import bitmusic.music.data.SongLibrary;
 import bitmusic.profile.classes.Category;
 import bitmusic.profile.classes.User;
 import bitmusic.profile.utilities.ProfileExceptions;
-import java.util.ArrayList;
-import java.util.Calendar;
 /**
  *
- * @author MilioPeralta
+ * @author MilioPeralta, Jérémy
  */
 public interface ApiProfile {
-    /*
-    public boolean checkPassword(String login, String password){
-        return true;
-    }
-    */
+	
+	/**
+	 * Chek if the login and password are correct
+	 * 
+	 * @param login
+	 * @param password
+	 * @return True if correct, false otherwise
+	 * @throws ProfileExceptions 
+     */
+    public boolean checkPassword(String login, String password) throws ProfileExceptions;
 
     /**
      * Creates a User as an object User
@@ -38,7 +44,14 @@ public interface ApiProfile {
     public void createUser(String login, String password, String firstName, String lastName, Calendar birthDate, String avatarPath) throws ProfileExceptions;
 
     /**
-     * Saves a User as an object User
+     * Saves the currentUser on a file
+     *
+     * @return
+     */
+    public void saveCurrentUser() throws ProfileExceptions;
+    
+    /**
+     * Saves the User on a file
      *
      * @return
      */
@@ -70,8 +83,9 @@ public interface ApiProfile {
      *
      * @param userId
      * @return ArrayList<String>
+     * @throws ProfileExceptions 
      */
-    public ArrayList<String> getCategoriesNameByUserId(String userId);
+    public ArrayList<String> getCategoriesNameByUserId(String userId) throws ProfileExceptions;
 
     /**
      * Returns a category name of an user
@@ -85,8 +99,9 @@ public interface ApiProfile {
      *
      * @param name
      * @return
+     * @throws ProfileExceptions 
      */
-    public void addCategory(String name);
+    public void addCategory(String name) throws ProfileExceptions;
 
     /**
      * Updates a category of an user
@@ -94,15 +109,17 @@ public interface ApiProfile {
      * @param categoryId
      * @param newName
      * @return
+     * @throws ProfileExceptions 
      */
-    public void updateCategory(String categoryId, String newName);
+    public void updateCategory(String categoryId, String newName) throws ProfileExceptions;
 
     /**
      * Deletes a category of an user
      *
      * @return
+     * @throws ProfileExceptions 
      */
-    public void deleteCategory(String categoryId);
+    public void deleteCategory(String categoryId) throws ProfileExceptions;
 
     /**
      * Adds a user to a category
@@ -110,8 +127,9 @@ public interface ApiProfile {
      * @param user
      * @param categoryId
      * @return
+     * @throws ProfileExceptions 
      */
-    public void addUserToCategory(User user, String categoryId);
+    public void addUserToCategory(User user, String categoryId) throws ProfileExceptions;
 
     /**
      * Moves a user to another category
@@ -119,32 +137,36 @@ public interface ApiProfile {
      * @param userId
      * @param categoryId
      * @return
+     * @throws ProfileExceptions 
      */
-    public void moveContact(String userId, String categoryId);
+    public void moveContact(String userId, String categoryId) throws ProfileExceptions;
 
     /**
      * Returns the rights associated to a song
      *
      * @param songId
      * @return Rights rights
+     * @throws ProfileExceptions 
      */
-    public Rights getRights(String songId, String categoryId);
+    public Rights getRights(String songId, String categoryId) throws ProfileExceptions;
 
     /**
      * Updates the rights associated to a song
      *
      * @param songId
      * @return
+     * @throws ProfileExceptions 
      */
-    public void updateRights(String songId, Rights right);
+    public void updateRights(String songId, Rights right) throws ProfileExceptions;
 
     /**
      * Updates the rights associated to a song
      *
      * @param songId
      * @return
+     * @throws ProfileExceptions 
      */
-    public void updateRights(String songId, boolean canIReadInfo, boolean canPlay, boolean canRate, boolean canComment);
+    public void updateRights(String songId, boolean canIReadInfo, boolean canPlay, boolean canRate, boolean canComment) throws ProfileExceptions;
 
     /**
      * Returns the songs of the current user
@@ -158,15 +180,17 @@ public interface ApiProfile {
      *
      * @param song
      * @return
+     * @throws ProfileExceptions 
      */
-    public void addSong(Song song);
+    public void addSong(Song song) throws ProfileExceptions;
 
     /**
      * Deletes the song of the current user
      *
      * @param songId
      * @return
+     * @throws ProfileExceptions 
      */
-    public void deleteSong(String songId);
+    public void deleteSong(String songId) throws ProfileExceptions;
 
 }

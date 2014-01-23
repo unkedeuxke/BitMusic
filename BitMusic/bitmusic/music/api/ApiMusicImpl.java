@@ -8,15 +8,27 @@ package bitmusic.music.api;
 import bitmusic.music.data.Comment;
 import bitmusic.music.data.Rights;
 import bitmusic.music.data.SongLibrary;
-import java.util.ArrayList;
-import java.util.*;
 import bitmusic.profile.api.ApiProfileImpl;
 import bitmusic.music.business.SongCommenter;
 import bitmusic.music.business.SongLoader;
+import bitmusic.music.business.SongPlayer;
+import bitmusic.music.business.SongRater;
 import bitmusic.music.business.SongSearcher;
+import bitmusic.music.business.strategies.AlbumSearchStrategy;
+import bitmusic.music.business.strategies.ArtistSearchStrategy;
+import bitmusic.music.business.strategies.TagSearchStrategy;
+import bitmusic.music.business.strategies.TitleSearchStrategy;
+import bitmusic.music.data.Grade;
+import bitmusic.music.data.Song;
 import bitmusic.music.exception.CopyMP3Exception;
-import java.io.IOException;
 import bitmusic.music.player.BitMusicPlayer;
+import bitmusic.network.exception.NetworkException;
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
 
 /**
  *
@@ -89,7 +101,98 @@ public final class ApiMusicImpl implements ApiMusic {
         return wasCommented;
     }
 
-    ;
+    
+    
+    /**
+     * add a Grade to a local song
+     *
+     * @param songID
+     * @param grade
+     * @return true to indicate to IHM that the song was local and it has to
+     * update the song
+     */
+    public boolean addGradeFromHmi(String songID, int grade) {
+
+        SongRater songRater ;
+        SongLibrary localSongLibrary;
+        boolean wasRated = false;
+
+        localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        songRater = new SongRater(localSongLibrary);
+        wasRated = songRater.addGradeFromHMI(songID, grade);
+
+        //besoin de récupérer la SongLibrary local - attente de Profile
+        return wasRated;
+    }
+
+    /**
+     *
+     * add a grade to a distant song
+     *
+     * @param songID
+     * @param grade
+     * @return false in order to send a comment request to the distant user
+     */
+     public boolean addGradeFromNetwork(String songID, Grade grade) {
+
+        SongRater songRater ;
+        SongLibrary localSongLibrary;
+        boolean wasRated = false;
+
+        localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        songRater = new SongRater(localSongLibrary);
+        wasRated = songRater.addGradeFromNetwork(songID, grade);
+
+        //besoin de récupérer la SongLibrary local - attente de Profile
+        return wasRated;
+    }
+    
+    /**
+     *
+     * delete comment
+     *
+     * @param songID
+     * @param authorId
+     * @param date
+     * @return false in order to send a comment request to the distant user
+     */
+     public boolean deleteComment(String songId, String authorId, Date date) 
+    
+    {
+        SongCommenter songCommenter;
+        SongLibrary localSongLibrary;
+        boolean commentWasDeleted = false;
+        
+        localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        songCommenter = new SongCommenter(localSongLibrary);
+        commentWasDeleted = songCommenter.deleteComment(songId, authorId, date);
+        
+        return commentWasDeleted;
+         
+     }
+    
+      /**
+     *
+     * delete grade
+     *
+     * @param songID
+     * @param authorId
+     * @return false in order to send a comment request to the distant user
+     */
+      public boolean deleteGrade(String songId, String authorId)
+      
+      {
+        SongRater songRater ;
+        SongLibrary localSongLibrary;
+        boolean gradeWasDeleted = false;
+        
+        localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        songRater = new SongRater(localSongLibrary);
+        gradeWasDeleted=songRater.deleteGrade(songId, authorId);
+        
+        return gradeWasDeleted;
+      }
+     
    
    /**
     * search a song by User 
@@ -104,7 +207,7 @@ public final class ApiMusicImpl implements ApiMusic {
         SongSearcher songSearcher = new SongSearcher(localSongLibrary);
         songSearcher.searchSongsbyUser(userID, searchId);
     }
-
+   
     /**
      * Add a song to SongLibrary
      *
@@ -114,12 +217,54 @@ public final class ApiMusicImpl implements ApiMusic {
      * @param tags song tags
      * @param rights song rights
      */
-    public void importSong(String path, String title, String artist, String album, LinkedList<String> tags, HashMap<String, Rights> rights) {
+    public boolean importSong(String path, String title, String artist, String album, LinkedList<String> tags, HashMap<String, Rights> rights) {
         SongLoader songLoader = new SongLoader();
         try {
             songLoader.importSong(path, title, artist, album, tags);
-        } catch (CopyMP3Exception | IOException excep) {
+        } catch (CopyMP3Exception excep) {
             System.out.println(excep.getMessage());
+            return false;
+        } catch (IOException excep) {
+            System.out.println(excep.getMessage());
+            return false;
+        }
+        return true;
+
+    }
+    
+    /**
+     * Delete a song from the Songlibrary (and the local mp3).
+     * 
+     * @param songId
+     * @return true if deleted, else false
+     */
+    public boolean deleteSong(String songId){
+        SongLoader songLoader = new SongLoader();
+        try {
+            songLoader.deleteSong(songId);
+        } catch (CopyMP3Exception excep) {
+            System.out.println(excep.getMessage());
+            return false;
+        } catch (IOException excep) {
+            System.out.println(excep.getMessage());
+            return false;
+        }
+        SongLibrary localSongLibrary = 
+                ApiProfileImpl.getApiProfile().getSongLibrary();
+        localSongLibrary.removeSong(songId);        
+        return true;
+    }
+    
+    /**
+     * Play a remote or a local song.
+     * @param song 
+     */
+    public void playSong(Song song) {
+        SongPlayer songPlayer = new SongPlayer();
+        try {
+            songPlayer.playSong(song);
+        } catch (NetworkException ex) {
+            System.out.println(ex.getMessage());
         }
     }
 
@@ -155,9 +300,20 @@ public final class ApiMusicImpl implements ApiMusic {
     /**
      * Stop a song. The song can be resume until a new song is not requested.
      */
-    public void pauseOrStopSong() {
+    public void pause() {
         try {
             BitMusicPlayer.getInstance().pause();
+        } catch (Exception e) {
+            System.out.println("Player : can't pause");
+        }
+    }
+    
+    /**
+     * Stop a song. The song can be resume until a new song is not requested.
+     */
+    public void stop() {
+        try {
+            BitMusicPlayer.getInstance().stop();
         } catch (Exception e) {
             System.out.println("Player : can't pause");
         }
@@ -211,25 +367,121 @@ public final class ApiMusicImpl implements ApiMusic {
      */
     public String getTempSongFile(String userId, String songId){
         SongLoader songLoader = new SongLoader();
-        return songLoader.getTempSongPath(userId, songId);
+        return songLoader.generateTempSongPath(userId, songId);
+    }
+    
+    /**
+     * Copy a song in temp folder to destination.
+     * 
+     * @param userId
+     * @param songId
+     * @param destination
+     */
+    public void saveSong(String userId, String songId, String destination){
+        SongLoader songLoader = new SongLoader();
+        try{
+            songLoader.saveSong(userId, songId, destination);
+        } catch(CopyMP3Exception excep){
+            System.out.println(excep.getMessage());
+        } catch(IOException ie){
+            System.out.println(ie.getMessage());
+        }
+    }
+    
+    /**
+     * Get the destination path of the song to dowload.
+     * @param userId 
+     * @param songId
+     * @return path of the song to download
+     */
+    public String getSavedSongPath(String userId, String songId){
+        SongLoader songLoader = new SongLoader();
+        return songLoader.getSongToDownload(userId, songId);
+    }
+    
+    /**
+     * Initialization of the current user's music folder.
+     * @throws IOException 
+     */
+    public void initMusicFolder(){
+        SongLoader songLoader = new SongLoader();
+        try {
+            songLoader.createMusicFolders();
+        } catch (IOException excep) {
+            System.out.println(excep.getMessage());
+        }
     }
 
-    /**
-     * Get the
-     * @param searchId
-     * @param tagList
-     * @return
-     */
     @Override
     public SongLibrary searchSongsByTags(String searchId, List<String> tagList) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        SongLibrary localSongLibrary;
-        localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
-
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
         SongSearcher songSearcher = new SongSearcher(localSongLibrary);
-        SongLibrary localTaggedSongs = songSearcher.searchSongsByTags(searchId, tagList);
-
+        SongLibrary localTaggedSongs = songSearcher.searchSongs(searchId, tagList, new TagSearchStrategy());
+        return localTaggedSongs;
+    }
+    
+    @Override
+    public SongLibrary searchLocalSongsByTags(List<String> tagList, String requestingUserId) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.getLocalSongs(requestingUserId, tagList, new TagSearchStrategy());
         return localTaggedSongs;
     }
 
+    @Override
+    public SongLibrary searchSongsByAlbum(String searchId, List<String> albumList) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.searchSongs(searchId, albumList, new AlbumSearchStrategy());
+        return localTaggedSongs;
+    }
+    
+    @Override
+    public SongLibrary searchLocalSongsByAlbum(List<String> albumList, String requestingUserId) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.getLocalSongs(requestingUserId, albumList, new AlbumSearchStrategy());
+        return localTaggedSongs;
+    }
+    
+    @Override
+    public SongLibrary searchSongsByArtist(String searchId, List<String> artistList) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.searchSongs(searchId, artistList, new ArtistSearchStrategy());
+        return localTaggedSongs;
+    }
+    
+    @Override
+    public SongLibrary searchLocalSongsByArtist(List<String> artistList, String requestingUserId) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.getLocalSongs(requestingUserId, artistList, new ArtistSearchStrategy());
+        return localTaggedSongs;
+    }
+
+    @Override
+    public SongLibrary searchSongsByTitle(String searchId, List<String> titleList) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.searchSongs(searchId, titleList, new TitleSearchStrategy());
+        return localTaggedSongs;
+    }
+
+    @Override
+    public SongLibrary searchLocalSongsByTitle(List<String> titleList, String requestingUserId) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.getLocalSongs(requestingUserId, titleList, new TitleSearchStrategy());
+        return localTaggedSongs;
+    }
+    
+    @Override
+    @Deprecated
+    public SongLibrary searchSongsByAll(String searchId, List<String> list) {
+        SongLibrary localSongLibrary = ApiProfileImpl.getApiProfile().getSongLibrary();
+        SongSearcher songSearcher = new SongSearcher(localSongLibrary);
+        SongLibrary localTaggedSongs = songSearcher.searchSongs(searchId, list, new TagSearchStrategy());
+        return localTaggedSongs;
+    }
 }

@@ -16,9 +16,13 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
+import bitmusic.profile.utilities.ProfileExceptions;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
- * @author Jérémy
+ * @author Jérémy, Fabien
  */
 public class UserTest {
 	private static final String   LOGIN      = "login";
@@ -49,13 +53,39 @@ public class UserTest {
 
     /**
      * Test of setLogin method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetLogin() {
+    public void testSetLogin() throws ProfileExceptions {
         System.out.println("setLogin");
         String newLogin = "newlogin";
-        user.setLogin(newLogin);
+        try {
+            user.setLogin(newLogin);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newLogin, user.getLogin());
+    }
+    
+     /**
+     * @throws ProfileExceptions
+     */
+    @Test(expected = ProfileExceptions.class)
+    public void testSetLoginEmptyName() throws ProfileExceptions {
+        System.out.println("setLogin");
+        String log = "";
+        user.setLogin(log);
+    }
+    
+    /**
+     * @throws ProfileExceptions
+     */
+
+    @Test(expected = ProfileExceptions.class)
+    public void testSetLoginNullName() throws ProfileExceptions {
+        System.out.println("setLogin");
+        String log = null;
+        user.setLogin(log);
     }
 
     /**
@@ -69,13 +99,28 @@ public class UserTest {
 
     /**
      * Test of setPassword method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetPassword() {
+    public void testSetPassword() throws ProfileExceptions {
         System.out.println("setPassword");
         String newPassword = "newpassword";
-        user.setPassword(newPassword);
+        try {
+            user.setPassword(newPassword);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newPassword, user.getPassword());
+    }
+    
+     /**
+     * @throws ProfileExceptions
+     */
+    @Test(expected = ProfileExceptions.class)
+    public void testPasswordEmptyName() throws ProfileExceptions {
+        System.out.println("setPassword");
+        String pw = "";
+        user.setPassword(pw);
     }
 
     /**
@@ -89,13 +134,18 @@ public class UserTest {
 
     /**
      * Test of setBirthDate method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetBirthDate() {
+    public void testSetBirthDate() throws ProfileExceptions {
         System.out.println("setBirthDate");
         Calendar newBirthdate = Calendar.getInstance();
         newBirthdate.set(2013, 12, 24);
-        user.setBirthDate(newBirthdate);
+        try {
+            user.setBirthDate(newBirthdate);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newBirthdate, user.getBirthDate());
     }
 
@@ -110,12 +160,17 @@ public class UserTest {
 
     /**
      * Test of setFirstName method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetFirstName() {
+    public void testSetFirstName() throws ProfileExceptions {
         System.out.println("setFirstName");
         String newFirstname = "newfirstname";
-        user.setFirstName(newFirstname);
+        try {
+            user.setFirstName(newFirstname);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newFirstname, user.getFirstName());
     }
 
@@ -130,12 +185,17 @@ public class UserTest {
 
     /**
      * Test of setLastName method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetLastName() {
+    public void testSetLastName() throws ProfileExceptions {
         System.out.println("setLastName");
         String newLastname = "newlastname";
-        user.setLastName(newLastname);
+        try {
+            user.setLastName(newLastname);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newLastname, user.getLastName());
     }
 
@@ -150,82 +210,92 @@ public class UserTest {
 
     /**
      * Test of setAvatarPath method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testSetAvatarPath() {
+    public void testSetAvatarPath() throws ProfileExceptions {
         System.out.println("setAvatarPath");
         String newAvatarPath = "newavatarpath";
-        user.setAvatarPath(newAvatarPath);
+        try {
+            user.setAvatarPath(newAvatarPath);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(newAvatarPath, user.getAvatarPath());
     }
 
     /**
      * Test of addCategory method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testAddCategory() {
+    public void testAddCategory() throws ProfileExceptions {
         System.out.println("addCategory");
         String categoryName = "category";
         List<Category> cat = user.getCategories();
         cat.add(new Category(categoryName));
-        user.addCategory(categoryName);
+        try {
+            user.addCategory(categoryName);
+        } catch (ProfileExceptions ex) {
+            Logger.getLogger(UserTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
         assertEquals(cat, user.getCategories());
     }
 
-    /**
-     * Test of updateCategory method, of class User.
-     */
-    @Test
-    public void testUpdateCategory() {
-        System.out.println("updateCategory");
-        String newCategoryName = "newName";
-        int id = 0;
-        List<Category> cat = new ArrayList<Category>(user.getCategories());
-        cat.get(id).setName(newCategoryName);
-        user.updateCategory(id, newCategoryName);
-        assertEquals(cat, user.getCategories());
-    }
 
     /**
      * Test of deleteCategory method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testDeleteCategory() {
+    public void testDeleteCategory() throws ProfileExceptions {
         System.out.println("deleteCategory");
-        int id = 0;
         List<Category> cat = new ArrayList<Category>(user.getCategories());
-        cat.remove(id);
-        user.deleteCategory(id);
+        String uuid = cat.get(0).getId();
+        cat.remove(0);
+        user.deleteCategory(uuid);
         assertEquals(cat, user.getCategories());
+    }
+    
+    /**
+     * Test of deleteCategory method, of class User with wrong id
+     * @throws ProfileExceptions 
+     */
+    @Test(expected=ProfileExceptions.class)
+    public void testDeleteCategoryWithWrongId() throws ProfileExceptions {
+        System.out.println("deleteCategoryWithWrongId");
+        String uuid = "wrongid";
+        user.deleteCategory(uuid);
     }
 
     /**
      * Test of addContact method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testAddContact() {
+    public void testAddContact() throws ProfileExceptions {
         System.out.println("addContact");
-        int id = 0;
         User newUser = new User("test", "mdptest");
         List<Category> cat = new ArrayList<Category>(user.getCategories());
-        cat.get(id).addUser(newUser);
-        user.addContact(newUser, id);
+        cat.get(0).addUser(newUser);
+        String uuid = cat.get(0).getId();
+        user.addContact(newUser, uuid);
         assertEquals(cat, user.getCategories());
     }
 
     /**
      * Test of removeContact method, of class User.
+     * @throws ProfileExceptions 
      */
     @Test
-    public void testRemoveContact() {
+    public void testRemoveContact() throws ProfileExceptions {
         System.out.println("removeContact");
-        int id = 0;
-        User newUser = new User("test", "mdptest");
-        user.addContact(newUser, id);
         List<Category> cat = new ArrayList<Category>(user.getCategories());
-        cat.get(id).deleteUser(newUser);
-        user.removeContact(newUser, id);
+        String uuid = cat.get(0).getId();
+        User newUser = new User("test", "mdptest");
+        user.addContact(newUser, uuid);
+        cat.get(0).deleteUser(newUser);
+        user.removeContact(newUser, uuid);
         assertEquals(cat, user.getCategories());
     }
-
 }

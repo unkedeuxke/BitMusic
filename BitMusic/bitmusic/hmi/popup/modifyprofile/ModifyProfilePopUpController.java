@@ -8,32 +8,34 @@ package bitmusic.hmi.popup.modifyprofile;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractController;
-import bitmusic.hmi.popup.importsong.ImportSongPopUpController;
+import bitmusic.profile.utilities.ProfileExceptions;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JOptionPane;
-import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
- *
- * @author unkedeuxke
+ * Controller class of ModifyProfilePopUp
+ * @author IHM
  */
 public final class ModifyProfilePopUpController extends AbstractController<ModifyProfilePopUpModel, ModifyProfilePopUpView> {
 
+    /**
+     * Constructor of ModifyProfilePopUpController
+     * @param model
+     * @param view
+     */
     public ModifyProfilePopUpController(final ModifyProfilePopUpModel model, final ModifyProfilePopUpView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on avatar browse button
+     * This listener allows to chose the avatar to import
+     * Due to a filter, only bmp, png, jpg, jpeg files can be chosen
+     */
     public class AvatarBrowseListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -50,7 +52,9 @@ public final class ModifyProfilePopUpController extends AbstractController<Modif
         }
     }
 
-
+    /**
+     * Listener on cancel button
+     */
     public class CancelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -59,6 +63,9 @@ public final class ModifyProfilePopUpController extends AbstractController<Modif
         }
     }
 
+    /**
+     * Listener on submit button
+     */
     public class ModifyMyProfileListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -67,58 +74,78 @@ public final class ModifyProfilePopUpController extends AbstractController<Modif
             WindowComponent win = WindowComponent.getInstance();
             ModifyProfilePopUpView view = ModifyProfilePopUpController.this.getView();
 
-            String prenom = view.getPrenomField().getText();
-            String nom = view.getNomField().getText();
-            String birthDate = view.getDateTextField().getText();
+            String firstName = view.getFirstNameField().getText();
+            String lastName = view.getLastNameField().getText();
+            //String birthDate = view.getBirthField().getText();
             String avatar = view.getAvatarField().getText();
-            Boolean hasChanged = new Boolean(false);
-            Boolean canModify = true;
+            Boolean hasChanged = false;
 
-            //Laisser ce if en première position !
-            if ( birthDate.length() > 0 ) {
+            // On rend impossible la modification de la date de naissance (directives de Profil)
+            /*if (birthDate.length() > 0) {
                 Calendar cal = Calendar.getInstance();
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-                canModify = true;
                 sdf.setLenient(false);
-                //Permet de vérifier aisément si le format de la date est correcte !
+
                 try {
                     cal.setTime(sdf.parse(birthDate));
+                    win.getApiProfile().getCurrentUser().setBirthDate(cal);
+                    win.getApiProfile().getCurrentUser().setBirthDate(win.getApiProfile().getCurrentUser().getBirthDate());
                 } catch (ParseException ex) {
-                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
-                    canModify = false;
+                    //Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
                     JOptionPane.showMessageDialog(
                         view,
-                        "<html>Le format de la date n'est pas valide !<br>Aucune modification n'a été effectuée !</html>",
+                        "Le format de la date n'est pas valide !",
                         "Erreur dans la date",
                         JOptionPane.WARNING_MESSAGE);
+                    return;
                 }
-                //win.getApiProfile().getCurrentUser().setBirthDate(cal);
+                catch (ProfileExceptions ex) {
+                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                    return;
+                }
+
+                hasChanged = true;
+            }*/
+
+            if (firstName.length() > 0) {
+                try {
+                    win.getApiProfile().getCurrentUser().setFirstName(firstName);
+                } catch (ProfileExceptions ex) {
+                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                    return;
+                }
+
                 hasChanged = true;
             }
 
-            if ( prenom.length() > 0 && canModify) {
-                win.getApiProfile().getCurrentUser().setFirstName(prenom);
+            if (lastName.length() > 0) {
+                try {
+                    win.getApiProfile().getCurrentUser().setLastName(lastName);
+                } catch (ProfileExceptions ex) {
+                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                    return;
+                }
+
                 hasChanged = true;
             }
 
+            if (avatar.length() > 0) {
+                try {
+                    win.getApiProfile().getCurrentUser().setAvatarPath(avatar);
+                } catch (ProfileExceptions ex) {
+                    Logger.getLogger(ModifyProfilePopUpController.class.getName()).log(Level.SEVERE, null, ex);
+                    return;
+                }
 
-            if ( nom.length() > 0 && canModify ) {
-                win.getApiProfile().getCurrentUser().setLastName(nom);
                 hasChanged = true;
             }
 
-            if ( avatar.length() > 0 && canModify ) {
-                win.getApiProfile().getCurrentUser().setAvatarPath(avatar);
-                hasChanged = true;
+            if (hasChanged) {
+                // On notifie la vue qu'il y a eu des changements
+                ModifyProfilePopUpController.this.getModel().notifyObservers("Profile édité !");
             }
 
-            if ( canModify ) {
-                WindowComponent.getInstance().getMyProfileComponent().getController().getPopUp().dispose();
-                //TODO : avertir les vues qui utilisent ces infos qu'il y a eu un changement !!
-                // Je pense par exemple à l'image de l'avatar sur la vu MyProfile
-            }
-
+            WindowComponent.getInstance().getMyProfileComponent().getController().getPopUp().dispose();
         }
     }
-
 }

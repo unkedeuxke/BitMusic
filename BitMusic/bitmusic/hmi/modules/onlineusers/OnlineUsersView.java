@@ -16,21 +16,27 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 /**
- *
- * @author unkedeuxke
+ * View class of OnlineUsers
+ * @author IHM
  */
 public final class OnlineUsersView extends AbstractView<OnlineUsersController> {
 
     private final String type = "EAST";
 
-    private final JLabel onlineUsersLabel = new JLabel("En ligne :");
+    private final JLabel onlineUsersLabel = new JLabel("Utilisateurs actuellement en ligne");
     private JTable table;
     private JScrollPane onlineUsersTablePane;
 
+    /**
+     * Constructor
+     */
     public OnlineUsersView() {
         super();
     }
 
+    /**
+     * Initializes the view
+     */
     @Override
     public void initPanel() {
         System.out.println("--- OnlineUsersView.initPanel()");
@@ -43,7 +49,9 @@ public final class OnlineUsersView extends AbstractView<OnlineUsersController> {
 
         // Attache des listeners aux colonnes concernées
         ButtonColumn infosColumn = new ButtonColumn(this.table, this.getController().getInfos(), 1);
+        this.table.getColumnModel().getColumn(1).setPreferredWidth(5);
         ButtonColumn mp3Column = new ButtonColumn(this.table, this.getController().getMp3(), 2);
+        this.table.getColumnModel().getColumn(2).setPreferredWidth(5);
 
         this.onlineUsersTablePane = new JScrollPane(this.table);
 
@@ -55,28 +63,37 @@ public final class OnlineUsersView extends AbstractView<OnlineUsersController> {
 
         layout.setHorizontalGroup(
             layout.createSequentialGroup()
-                .addComponent(onlineUsersLabel)
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addComponent(onlineUsersLabel)
                     .addComponent(onlineUsersTablePane)
                 )
          );
         layout.setVerticalGroup(
             layout.createSequentialGroup()
                .addComponent(onlineUsersLabel)
-               .addGroup(layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                    .addComponent(onlineUsersTablePane)
-               )
+               .addComponent(onlineUsersTablePane)
         );
+
+        this.getPanel().setPreferredSize(new Dimension(250,250));
     }
 
+    /**
+     * Returns the type of the window
+     * The type of the window refers to its location in the screen
+     * @return type
+     */
     @Override
     public String getType() {
        return type;
     }
 
+    /**
+     * Updates the view
+     * @param obj
+     * @param str
+     */
     @Override
     public void update(Observable obj, String str) {
-        System.out.println("----- OnlineUsersView.update() : " + str);
-        this.onlineUsersTablePane.setViewportView(this.table);
+        System.out.println("----- OnlineUsersView.update() -> " + str);
     }
 }

@@ -7,97 +7,204 @@
 package bitmusic.hmi.modules.playbar;
 
 import bitmusic.hmi.mainwindow.WindowComponent;
-import bitmusic.hmi.modules.connection.ConnectionController;
 import bitmusic.hmi.patterns.AbstractController;
+import bitmusic.music.player.BitMusicPlayer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import javax.swing.JOptionPane;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  *
- * @author unkedeuxke
+ * @author IHM
  */
 public final class PlayBarController extends AbstractController<PlayBarModel, PlayBarView> {
 
-    private boolean resume = false;
+    private Thread sliderThread = null;
 
+    /**
+     *
+     * @param model
+     * @param view
+     */
     public PlayBarController(final PlayBarModel model, final PlayBarView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on play button
+     * If no song was loaded, a warning message is displayed
+     */
     public class PlayListener implements ActionListener  {
-        final private Path p = Paths.get("ilikeit.mp3");
-        final private String filename = "/bitmusic/hmi/modules/playbar/songitems/ilikeit.mp3";
 
-        // Ici il faut mettre le chamin absolu avec deux back slash sinon il va renvoyer une FileNotFoundException
-        final private String fileNameTochange = "C:\\Users\\khadre\\Documents\\NetBeansProjects\\BitMusic\\BitMusic\\bitmusic\\hmi\\modules\\playbar\\songitems\\ilikeit.mp3";
-        private Player player;
         @Override
         public void actionPerformed(ActionEvent e) {
-           // try {
-                System.out.println("---- Clic sur le bouton Play");
+            if ( PlayBarController.this.getModel().getSong() == null ) {
+                JOptionPane.showMessageDialog(
+                         null,
+                         "Aucune musique n'a été chargée",
+                         "Erreur",
+                         JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-                WindowComponent win = WindowComponent.getInstance();
-                // Plays a song
-                if (resume == false) {
-                     System.out.println("-----Playing the song for the first time");
-                     win.getApiMusic().playSongFromStart(fileNameTochange);
+            BitMusicPlayer bitMusic = BitMusicPlayer.getInstance();
+            final WindowComponent win = WindowComponent.getInstance();
+
+            if ( PlayBarController.this.getModel().isPlaying() ) {
+                //La musique est en lecture : il faut faire une pause !
+                System.out.println("---- Clic sur le bouton Pause");
+                PlayBarController.this.getModel().setIsPlaying(false);
+                PlayBarController.this.getModel().setFrame(win.getApiMusic().getCurrentFrame());
+                win.getApiMusic().pause();
+                PlayBarController.this.sliderThread.interrupt();
+            }
+            else {
+                //La musique n'est pas en lecture : il faut la lire
+                System.out.println("---- Clic sur le bouton Play");
+                PlayBarController.this.getModel().setIsPlaying(true);
+                JSlider playBar = win.getPlayBarComponent().getView().getPlayBar();
+                int frame = PlayBarController.this.getModel().getFrame();
+
+                if ( frame == 0 ) {
+                    //La musique n'a jamais encore été lue
+                    win.getApiMusic().playSong(PlayBarController.this.getModel().getSong());
                 }
                 else {
-                    System.out.println("------Resuming the song previously paused");
-                    win.getApiMusic().resumeSong();
-                    resume = false;
+                    //La musique a été mise sur pause, on reprend la lecture
+                    win.getApiMusic().playSongFromSpecificFrame(frame);
                 }
 
-
-                //Path p = Paths.get(this.getClass().getResource(filename).toString());
-                /*String res = this.getClass().getResource(filename).toString();
-                //res = res.replace ("/", "\\");
-                //System.out.println("---- PATH : " + this.getClass().getResource(filename).toString());
-                //Path folder = p.getParent();
-
-                /// the following code's purpose is just to test JLayer functionality, it will be removed when ApiMusic id working fine
-                FileInputStream fis     = new FileInputStream("C:\\Users\\khadre\\Documents\\NetBeansProjects\\BitMusic\\BitMusic\\bitmusic\\hmi\\modules\\playbar\\songitems\\ilikeit.mp3");
-                BufferedInputStream bis = new BufferedInputStream(fis);
-                player = new Player(bis);
-                player.play();
-            } catch (JavaLayerException ex) {
-                Logger.getLogger(PlayBarController.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (FileNotFoundException ex) {
-                System.out.println("---- Exception : FILE NOT FOUND");
-            }*/
+                Runnable r = new Runnable() {
+                    public void run() {
+                        PlayBarController.this.sliderUpdater(win);
+                    }
+                };
+                PlayBarController.this.startThread(r);
+            }
         }
     }
 
+    /**
+     * Update the slider when a song is played
+     * @param win
+     */
+    public void sliderUpdater(WindowComponent win) {
+        JSlider playBar = win.getPlayBarComponent().getView().getPlayBar();
+        playBar.setMaximum(win.getApiMusic().getNumberOfFrame());
+        while( PlayBarController.this.getModel().isPlaying() ) {
+            playBar.setValue(win.getApiMusic().getCurrentFrame());
+        }
+    }
+
+    public void startThread(Runnable r) {
+        //PlayBarController.this.sliderThread.interrupt();
+        PlayBarController.this.sliderThread = new Thread(r);
+        PlayBarController.this.sliderThread.setName("SliderThread");
+        PlayBarController.this.sliderThread.setPriority(Thread.MAX_PRIORITY);
+        PlayBarController.this.sliderThread.start();
+    }
+
+    /**
+     * Listener on stop button
+     */
     public class StopListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("---- Clic sur le bouton Stop");
-
-
-            // Stops or pauses a song that is being played
-              // we pause the song
-             WindowComponent win = WindowComponent.getInstance();
-             win.getApiMusic().pauseOrStopSong();
-             resume = true;
+            if ( PlayBarController.this.sliderThread != null ) {
+                PlayBarController.this.getModel().setIsPlaying(false);
+                WindowComponent win = WindowComponent.getInstance();
+                PlayBarController.this.getModel().setFrame(0);
+                win.getApiMusic().stop();
+                PlayBarController.this.sliderThread.interrupt();
+                win.getPlayBarComponent().getView().getPlayBar().setValue(0);
+            }
         }
     }
 
+    /**
+     * Listener on download button
+     */
     public class DownloadListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             System.out.println("---- Clic sur le bouton Download");
 
-            // Plays the next song
+            // Downloads the song
         }
+    }
+
+    // Pour 'écouter' le temps de lecture du son et l'afficher sur la slider
+
+    /**
+     *
+     */
+
+    public class SoundTimeListener implements ChangeListener {
+
+        @Override
+        public void stateChanged(ChangeEvent e) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            // TODO
+        }
+
+    }
+
+    /**
+     * Listener on cursor
+     */
+    public class CursorListener implements MouseListener {
+
+        final WindowComponent win = WindowComponent.getInstance();
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+        }
+
+        /**
+         * Moves the slider to the value that a user clicks on and plays from that
+         */
+        @Override
+        public void mousePressed(MouseEvent e) {
+            System.out.println("---- Mouse pressed on Slider");
+            JSlider playBar = win.getPlayBarComponent().getView().getPlayBar();
+            double p = e.getPoint().getX();
+            double percent = p / ((double) playBar.getWidth());
+            int range = playBar.getMaximum() - playBar.getMinimum();
+            double newVal = range * percent;
+            int result = (int)(playBar.getMinimum() + newVal);
+
+            if ( !PlayBarController.this.getModel().isPlaying() ) {
+                PlayBarController.this.getModel().setIsPlaying(true);
+                Runnable r = new Runnable() {
+                    public void run() {
+                        PlayBarController.this.sliderUpdater(win);
+                    }
+                };
+                PlayBarController.this.startThread(r);
+            }
+
+            win.getApiMusic().playSongFromSpecificFrame(result);
+            System.out.println("---- Result = " + result +"\n");
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+
+        }
+
     }
 }

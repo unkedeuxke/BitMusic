@@ -11,8 +11,11 @@ package bitmusic.profile.utilities;
  * @author Holywa, MilioPeralta
  */
 public enum ProfileExceptionType {
-    LoginNull,
-    PasswordNull,
+    LoginNullOrEmpty,
+    PasswordNullOrEmpty,
+    BirthDateNull,
+    PathNullorEmpty,
+    CatNameNullOrEmpty,
     ConnectionWrongLogin,
     ConnectionWrongPassword,
     FileNotFound,
@@ -24,5 +27,18 @@ public enum ProfileExceptionType {
     FindingClassUserError,
     DirNotFound,
     LoginWithInvalidCharacters,
-    CategoryNotFound,
+    CategoryNotFound, 
+    CategoryEmptyName,
+    LoginEmptyName,
+    UserIdEmptyName,
+    PasswordEmptyName,
+    BirthdateEmptyName,
+    FirstNameNullOrEmpty,
+    LastNameNullOrEmpty,
+    AvatarPathEmpty,
+    SongEmptyName,
+    UserNull,
+    EmptyString,
+    RightNull,
+    SongNull
 };

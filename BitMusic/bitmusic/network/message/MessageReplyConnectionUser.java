@@ -36,7 +36,7 @@ public final class MessageReplyConnectionUser extends AbstractMessage {
    }
 
    /**
-    * Adds the distant user to the directory after it has replied
+    * Adds the distant user to the directory after it has replied.
     */
    @Override
    public void treatment() {
@@ -44,10 +44,12 @@ public final class MessageReplyConnectionUser extends AbstractMessage {
            Controller.getInstance().addUserToDirectory(
                    this.profile.getUserId(),
                    this.ipSource);
+        System.out.println("2####"+this.profile);
            WindowComponent.getInstance().getApiHmi().
                    notifyNewConnection(this.profile);
        } catch (NetworkDirectoryException exception) {
-           //process exception
+           WindowComponent.getInstance().getApiHmi()
+                   .errorNotification("Network", exception.getMessage());
        }
    }
 

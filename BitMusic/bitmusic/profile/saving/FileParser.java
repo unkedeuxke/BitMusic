@@ -6,9 +6,6 @@
 
 package bitmusic.profile.saving;
 
-import bitmusic.profile.classes.User;
-import bitmusic.profile.utilities.ProfileExceptions;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -21,6 +18,11 @@ import java.nio.file.Path;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jasypt.util.password.ConfigurablePasswordEncryptor;
+
+import bitmusic.profile.classes.User;
+import bitmusic.profile.utilities.ProfileExceptions;
+
 /**
  *
  * @author Holywa, MilioPeralta
@@ -32,6 +34,9 @@ public class FileParser {
      *
      */
     private static FileParser currentParser;
+    private static String separator = FileSystems.getDefault().getSeparator();
+    private static String mainStructure = separator + "BitTest" + separator + "profiles" + separator;
+    private static String profileStructure = separator + "profile" + separator;
 
     //######################### CONSTRUCTORS ###########################//
     /**
@@ -55,17 +60,22 @@ public class FileParser {
      * @throws ProfileExceptions
      */
     public User loadUser(String login, String pwd) throws ProfileExceptions {
+    	User loadedUser = null;
         try {
-            String defaultPath = new File("").getAbsolutePath().toString() + "\\BitMusic\\profiles\\";
-
+            String defaultPath = new File("").getAbsolutePath().toString()
+            		+ mainStructure;
             DirectoryStream<Path> stream = Files.newDirectoryStream(FileSystems.getDefault().getPath(defaultPath));
             for(Path path:stream) {
                 if(path.getFileName().toString().contains(login) && (new File(path.toString())).isDirectory()) {
-                    if(FileParser.getFileParser().readAuthFile(path.toString(), pwd)) {
-                        FileInputStream saveFile = new FileInputStream(path.toString() + "\\profile\\" + login + ".ser");
-                        try (ObjectInputStream ois = new ObjectInputStream(saveFile)) {
-                            User loadedUser = (User) ois.readObject();
-                            return loadedUser;
+                    if(readAuthFile(path.toString(), pwd)) {
+                        try {
+                            FileInputStream saveFile = new FileInputStream(path.toString()
+                                    + profileStructure
+                                    + login + ".ser");
+                            ObjectInputStream ois = new ObjectInputStream(saveFile);
+                            loadedUser = (User) ois.readObject();
+                            ois.close();
+                            saveFile.close();
                         }
                         catch (ClassNotFoundException ex) {
                             Logger.getLogger(FileParser.class.getName()).log(Level.SEVERE, null, ex);
@@ -76,17 +86,21 @@ public class FileParser {
         } catch (IOException ex) {
             Logger.getLogger(FileParser.class.getName()).log(Level.SEVERE, null, ex);
         }
-        throw new ProfileExceptions("User not found on computer");
+        return loadedUser;
     }
 
     public boolean readAuthFile(String path, String pwd) throws ProfileExceptions {
         try {
-            FileInputStream authFile = new FileInputStream(path + "\\profile\\auth");
-            try (ObjectInputStream ois = new ObjectInputStream(authFile)) {
-                String login = ois.readUTF();
-                String password = ois.readUTF();
-                return (password.equals(pwd));
-            }
+            FileInputStream authFile = new FileInputStream(path
+            		+ profileStructure + "auth");
+
+            ObjectInputStream ois = new ObjectInputStream(authFile);
+            String password = ois.readUTF();
+            ois.close();
+            authFile.close();
+            ConfigurablePasswordEncryptor pwdEncryptor = new ConfigurablePasswordEncryptor();
+            pwdEncryptor.setAlgorithm("SHA-1");
+            return pwdEncryptor.checkPassword(pwd, password);
         }
         catch(FileNotFoundException eFound) {
             throw new ProfileExceptions("File not found\n" + eFound.toString());

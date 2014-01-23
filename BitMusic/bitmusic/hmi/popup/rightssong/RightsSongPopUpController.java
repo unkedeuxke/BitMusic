@@ -6,21 +6,28 @@
 
 package bitmusic.hmi.popup.rightssong;
 
-import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.hmi.patterns.AbstractController;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- *
- * @author unkedeuxke
+ * Controller class of RightsSongPopUp
+ * @author IHM
  */
 public final class RightsSongPopUpController extends AbstractController<RightsSongPopUpModel, RightsSongPopUpView> {
 
+    /**
+     * Constructor of RightsSongPopUpController
+     * @param model
+     * @param view
+     */
     public RightsSongPopUpController(final RightsSongPopUpModel model, final RightsSongPopUpView view) {
         super(model, view);
     }
 
+    /**
+     * Listener on cancel button
+     */
     public class CancelListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {

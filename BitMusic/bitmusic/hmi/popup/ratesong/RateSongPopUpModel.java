@@ -7,14 +7,39 @@
 package bitmusic.hmi.popup.ratesong;
 
 import bitmusic.hmi.patterns.AbstractModel;
+import bitmusic.music.data.Song;
 
 /**
- *
- * @author unkedeuxke
+ * Model class of RateSongPopUp
+ * @author IHM
  */
 public final class RateSongPopUpModel extends AbstractModel {
 
-    public RateSongPopUpModel() {
+    private Song song;
+
+    /**
+     * Constructor of RateSongPopUpModel
+     * @param song
+     */
+    public RateSongPopUpModel(Song song) {
         super();
+        this.setSong(song);
     }
+
+    /**
+     * Returns a song model
+     * @return Song song
+     */
+    public Song getSong() {
+        return song;
+    }
+
+    /**
+     * Updates a song model
+     * @param song
+     */
+    public void setSong(Song song) {
+        this.song = song;
+    }
+
 }

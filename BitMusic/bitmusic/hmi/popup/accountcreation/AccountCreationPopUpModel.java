@@ -9,11 +9,14 @@ package bitmusic.hmi.popup.accountcreation;
 import bitmusic.hmi.patterns.AbstractModel;
 
 /**
- *
- * @author unkedeuxke
+ * Model class of AccountCreationPopUp
+ * @author IHM
  */
 public final class AccountCreationPopUpModel extends AbstractModel {
 
+    /**
+     * Constructor of AccountCreationPopUp
+     */
     public AccountCreationPopUpModel() {
         super();
     }

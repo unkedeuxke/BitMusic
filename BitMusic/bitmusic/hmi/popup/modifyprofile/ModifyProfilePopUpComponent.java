@@ -9,11 +9,14 @@ package bitmusic.hmi.popup.modifyprofile;
 import bitmusic.hmi.patterns.AbstractComponent;
 
 /**
- *
- * @author unkedeuxke
+ * Components class of ModifyProfilePopUp
+ * @author IHM
  */
 public final class ModifyProfilePopUpComponent extends AbstractComponent<ModifyProfilePopUpModel, ModifyProfilePopUpView, ModifyProfilePopUpController> {
 
+    /**
+     * Constructor of ModifyProfilePopUpComponent
+     */
     public ModifyProfilePopUpComponent() {
         this.model = new ModifyProfilePopUpModel();
         this.view = new ModifyProfilePopUpView();

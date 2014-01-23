@@ -16,23 +16,37 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 /**
- *
- * @author unkedeuxke
+ * View class of CommentSongPopUp
+ * @author IHM
  */
 public final class CommentSongPopUpView extends AbstractView<CommentSongPopUpController> {
 
     private final String type = "POPUP";
+    private int parentTabId;
+
+
+
     private final JLabel commentSongLabel = new JLabel("Commenter un morceau");
     private final JLabel commentLabel = new JLabel("Tapez votre commentaire ");
-    private final JTextField commentField = new JTextField("");
+    private JTextField commentField = new JTextField("");
     private final JButton validateButton = new JButton("Valider");
     private final JButton resetButton = new JButton("Réinitialiser");
 
+/**
+ * Constructor of CommentSongPopUpView
+ * @param parentTabId
+ */
 
-    public CommentSongPopUpView() {
+    public CommentSongPopUpView(int parentTabId) {
+
         super();
+        this.parentTabId = parentTabId;
+
     }
 
+    /**
+     * Initializes the view
+     */
     @Override
     public void initPanel() {
         System.out.println("--- CommentSongPopUpView.initPanel()");
@@ -43,6 +57,9 @@ public final class CommentSongPopUpView extends AbstractView<CommentSongPopUpCon
         this.commentLabel.setSize(d);
         this.validateButton.setSize(d);
         this.resetButton.setSize(d);
+
+        this.validateButton.addActionListener(this.getController().new ValidateListener());
+        this.resetButton.addActionListener(this.getController().new ResetListener());
 
         GroupLayout layout = new GroupLayout(this.getPanel());
         this.getPanel().setLayout(layout);
@@ -79,13 +96,46 @@ public final class CommentSongPopUpView extends AbstractView<CommentSongPopUpCon
 
     }
 
+    /**
+     * Returns the type of the PopUp
+     * The type of the PopUp refers to its location in the screen
+     * @return type
+     */
     @Override
     public String getType() {
         return type;
     }
 
+    /**
+     * Shows a message of update on the console
+     * @param obj
+     * @param str
+     */
     @Override
     public void update(Observable obj, String str) {
-        System.out.println("----- CommentSongPopUpView.update()");
+        System.out.println("----- CommentSongPopUpView.update() -> " + str);
+    }
+
+    /**
+     * Returns a comment of a song
+     * @return JTextField commentField
+     */
+    public JTextField getCommentField() {
+        return commentField;
+    }
+
+    /**
+     * Updates a comment of a song
+     * @param comment
+     */
+    public void setCommentField(JTextField comment) {
+        this.commentField = comment;
+    }
+    /**
+     * Returns the parent id of the current tab
+     * @return int parentTabId
+     */
+    public int getParentTabId() {
+        return parentTabId;
     }
 }

@@ -6,12 +6,13 @@
 
 package bitmusic.network.main;
 
+import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.network.message.AbstractMessage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 
 /**
  *
@@ -22,14 +23,19 @@ public class DatagramWorker extends AbstractManageable {
     /**
      * The socket use to exchange.
      */
-    private final transient DatagramChannel channel;
+    private final transient DatagramSocket socket;
+
+    /**
+     * Buffer size.
+     */
+    private static final int SIZE = 8000;
 
     /**
     *@param paramSocket The socket
     */
-    DatagramWorker(final DatagramChannel paramChannel) {
+    DatagramWorker(final DatagramSocket paramSocket) {
         super();
-        channel = paramChannel;
+        socket = paramSocket;
     }
 
     /**
@@ -37,24 +43,42 @@ public class DatagramWorker extends AbstractManageable {
      */
     @Override
     public final void run() {
-        try {
-            ByteBuffer incomingData = ByteBuffer.allocate(1024);
+        byte[] buf = new byte[SIZE];
 
-            channel.receive(incomingData);
+        final DatagramPacket datagramPaquet = new DatagramPacket(buf,
+                buf.length);
 
-            final byte[] data = incomingData.array();
-            final ByteArrayInputStream bais = new ByteArrayInputStream(data);
-            final ObjectInputStream ois = new ObjectInputStream(bais);
+        while (true) {
             try {
-                final AbstractMessage message =
-                        (AbstractMessage) ois.readObject();
+                socket.receive(datagramPaquet);
 
-                message.treatment();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+                buf = datagramPaquet.getData();
+
+                final ByteArrayInputStream bais = new ByteArrayInputStream(buf);
+
+                final ObjectInputStream ois = new ObjectInputStream(bais);
+
+                try {
+                    final AbstractMessage message =
+                            (AbstractMessage) ois.readObject();
+                    /*
+                        If we receive a message that comes from us,
+                        for example, because of Broadcast,
+                        we don't treat it.
+                    */
+                    System.out.println("m = " + message);
+                    if (!message.getIpSource().
+                            equals(Controller.getNetworkAddress())) {
+                        message.treatment();
+                    }
+                } catch (ClassNotFoundException e) {
+                    WindowComponent.getInstance().getApiHmi().
+                            errorNotification("Network", e.getMessage());
+                }
+            } catch (IOException e) {
+                 WindowComponent.getInstance().getApiHmi()
+                             .errorNotification("Network", e.getMessage());
             }
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
         }
     }
 
@@ -62,7 +86,7 @@ public class DatagramWorker extends AbstractManageable {
      *
      * @return socket
      */
-    public final DatagramChannel getChannel() {
-        return this.channel;
+    public final DatagramSocket getSocket() {
+        return this.socket;
     }
 }

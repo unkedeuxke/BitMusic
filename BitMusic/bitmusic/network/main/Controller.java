@@ -7,10 +7,9 @@
 package bitmusic.network.main;
 
 
+import bitmusic.hmi.mainwindow.WindowComponent;
 import bitmusic.network.exception.NetworkDirectoryException;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,11 +25,11 @@ public final class Controller {
     /**
      * The broadcast address of the network.
      */
-    private transient String broadcastAddress = "";
+    private transient String broadcastAddress;
     /**
      * The network address of the network.
      */
-    private transient String networkAddress = "";
+    private transient String networkAddress;
     /**
      * Contains the singleton instance.
      */
@@ -51,15 +50,16 @@ public final class Controller {
      */
     private final transient ApiProfileImpl apiProfile;
     /**
-     * References the Exception API
+     * References the network listener
      * (Due to the composition link on the class diagram).
      */
-    private final transient ApiExceptionImpl apiException;
+    private final transient AbstractNetworkListener tcpListener;
+
     /**
      * References the network listener
      * (Due to the composition link on the class diagram).
      */
-    private final transient NetworkListener netListener;
+    private final transient AbstractNetworkListener udpListener;
 
 
     /**
@@ -79,20 +79,18 @@ public final class Controller {
      * Construct a new controller and links all the singleton's instances.
      */
     private Controller() {
-        this.networkAddress = "";
-        this.broadcastAddress = "";
         try {
             this.networkAddress = InetAddress.getLocalHost().getHostAddress();
             this.broadcastAddress = findBroadCastAddress();
-        }
-        catch (UnknownHostException ex) {
+        } catch (UnknownHostException ex) {
+            WindowComponent.getInstance().getApiHmi()
+                    .errorNotification("Network", ex.getMessage());
         }
 
         //Create the directory
         directory = new HashMap();
 
         //Contains all the API's instances
-        apiException = bitmusic.network.main.ApiExceptionImpl.getInstance();
         apiHmi = bitmusic.network.main.ApiHmiImpl.getInstance();
         apiMusic = bitmusic.network.main.ApiMusicImpl.getInstance();
         apiProfile = bitmusic.network.main.ApiProfileImpl.getInstance();
@@ -101,7 +99,8 @@ public final class Controller {
         threadManager = bitmusic.network.main.ThreadManager.getInstance();
 
         //Contains the NetworkListener instance
-        netListener = bitmusic.network.main.NetworkListener.getInstance();
+        tcpListener = bitmusic.network.main.TCPNetworkListener.getInstance();
+        udpListener = bitmusic.network.main.UDPNetworkListener.getInstance();
     }
 
     /**
@@ -129,6 +128,7 @@ public final class Controller {
     public static String getNetworkAddress() {
         return CONTROLLER.networkAddress;
     }
+
     /**
      * Get the ApiHmiImpl.
      * @return instance of ApiHmiImpl
@@ -151,18 +151,18 @@ public final class Controller {
         return apiProfile;
     }
     /**
-     * Get the ApiExceptionImpl.
-     * @return instance of ApiExceptionImpl
+     * Get the NetworkListener.
+     * @return instance of NetworkListener
      */
-    public ApiExceptionImpl getApiException() {
-        return apiException;
+    public AbstractNetworkListener getTCPNetworkListener() {
+        return tcpListener;
     }
     /**
      * Get the NetworkListener.
      * @return instance of NetworkListener
      */
-    public NetworkListener getNetworkListener() {
-        return netListener;
+    public AbstractNetworkListener getUDPNetworkListener() {
+        return udpListener;
     }
     /**
      * Get the WorkManager.
@@ -229,6 +229,24 @@ public final class Controller {
         return directory.get(userId);
     }
 
+        /**
+     * .
+     * @param userIp Ip of the user
+     * @return the Ip corresponding to the userId given
+     * @throws NetworkDirectoryException An exception is thrown if the userId
+     * doesn't exist
+     */
+    public String getUserIdFromDirectory(final String userIp)
+            throws NetworkDirectoryException {
+        if (!directory.containsValue(userIp)) {
+            throw new NetworkDirectoryException(
+                    "The ip " + userIp + " doesn't exist in the directory.");
+        }
+        final String userId = directory.get(userIp);
+
+        return userId;
+    }
+
     /**
      * @return List containing all IP addresses contained in the directory
      */
@@ -258,8 +276,11 @@ public final class Controller {
         return userList;
     }
 
-
-    private String findBroadCastAddress(){
+    /**
+     * Method used to find the broadcast address.
+     * @return The broadcast address
+     */
+    private String findBroadCastAddress() {
         String brcstAddr = "172.22.255.255";
         /*
         try {
@@ -278,15 +299,16 @@ public final class Controller {
         return brcstAddr;
     }
 
-    private final String OS = System.getProperty("os.name").toLowerCase();
-
-    private boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
-    }
-
     /*
     ###   MAY BE USEFUL   ###
     #########################
+
+    private static final String OPSYS = System.
+            getProperty("os.name").toLowerCase();
+
+    private boolean isMac() {
+        return (OPSYS.indexOf("mac") >= 0);
+    }
 
     private boolean isWindows() {
         return (OS.indexOf("win") >= 0);
